@@ -5,7 +5,7 @@
 # https://hbctraining.github.io/Training-modules/RShiny/lessons/shinylive.html
 # Run the shinylive::export line to populate the docs folder 
 # so that shinylive works from github
-#shinylive::export(appdir = "../CentralLimitProportion/", destdir = "docs")
+#shinylive::export(appdir = "../CommonStatisticalMistakes/", destdir = "docs")
 #httpuv::runStaticServer("docs/", port = 8008)
 
 #library(shiny)
