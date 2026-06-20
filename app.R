@@ -1,4 +1,4 @@
-# Ten Common Statistical Mistakes - teaching app (base R only)
+# Common Statistical Mistakes - teaching app (base R only)
 # Based on: Makin & Orban de Xivry (2019) eLife 8:e48175
 # No tidyverse / ggplot / Hmisc / MASS / boot dependencies.
 
@@ -54,8 +54,8 @@ boot_r_ci <- function(x, y, reps = 600) {
 
 # ================================ UI =========================================
 ui <- fluidPage(
-  titlePanel("Ten Common Statistical Mistakes",
-             windowTitle = "Ten Statistical Mistakes"),
+  titlePanel("Common Statistical Mistakes",
+             windowTitle = "Statistical Mistakes"),
   
   tags$head(tags$style(HTML(
     ".action-button { color:#fff; background-color:#569BBD; border:none; }
@@ -73,11 +73,11 @@ ui <- fluidPage(
       fluidRow(
         column(
           width = 8,
-          h2("Ten common statistical mistakes", style = paste0("color:", teal, "; font-weight:700;")),
+          h2("Common statistical mistakes", style = paste0("color:", teal, "; font-weight:700;")),
           p(style = "font-size:17px; line-height:1.6;",
             "Most mistakes in published research are not failures of advanced ",
             "mathematics - they are everyday errors of design and interpretation ",
-            "that are easy to make and easy to miss. The ten below, drawn from a ",
+            "that are easy to make and easy to miss. The ones below, drawn from a ",
             "widely cited review, show up again and again across every field that ",
             "uses statistics, from biology to psychology to medicine."),
           p(style = "font-size:17px; line-height:1.6;",
