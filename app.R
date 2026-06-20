@@ -3,7 +3,7 @@
 # No tidyverse / ggplot / Hmisc / MASS / boot dependencies.
 
 # https://hbctraining.github.io/Training-modules/RShiny/lessons/shinylive.html
-# Run the shinylive::export line to populate the docs folder 
+# Run the shinylive::export line to populate the docs folder
 # so that shinylive works from github
 #shinylive::export(appdir = "../CommonStatisticalMistakes/", destdir = "docs")
 #httpuv::runStaticServer("docs/", port = 8008)
@@ -56,16 +56,16 @@ boot_r_ci <- function(x, y, reps = 600) {
 ui <- fluidPage(
   titlePanel("Common Statistical Mistakes",
              windowTitle = "Statistical Mistakes"),
-  
+
   tags$head(tags$style(HTML(
     ".action-button { color:#fff; background-color:#569BBD; border:none; }
      .action-button:hover { color:#fff; background-color:#3E7C99; }
      .action-button:active { transform:scale(0.97); }"
   ))),
-  
+
   tabsetPanel(
     type = "tabs",
-    
+
     # ---- Overview ----------------------------------------------------------
     tabPanel(
       "Overview",
@@ -98,7 +98,8 @@ ui <- fluidPage(
             tags$li(strong("p-hacking:"), " trying many analyses until one 'works'."),
             tags$li(strong("Multiple comparisons:"), " run enough tests and something looks significant."),
             tags$li(strong("Non-significant results:"), " absence of evidence is not evidence of absence."),
-            tags$li(strong("Correlation vs causation:"), " a shared cause can fake a relationship.")
+            tags$li(strong("Correlation vs causation:"), " a shared cause can fake a relationship."),
+            tags$li(strong("Filtering bias:"), " selecting only the 'best' can reverse or erase a true correlation.")
           ),
           br(),
           p(style = "font-size:15px; color:#555;",
@@ -121,7 +122,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 1. Control group --------------------------------------------------
     tabPanel(
       "1. Controls",
@@ -147,7 +148,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 2. Comparing effects ----------------------------------------------
     tabPanel(
       "2. Compare",
@@ -178,8 +179,8 @@ ui <- fluidPage(
         )
       )
     ),
-    
-    # ---- 3. Units of analysis ----------------------------------------------
+
+    # ---- 3. Pseudoreplication ----------------------------------------------
     tabPanel(
       "3. Pseudoreplication",
       br(),
@@ -218,7 +219,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 4. Spurious correlations ------------------------------------------
     tabPanel(
       "4. Spurious",
@@ -244,7 +245,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 5. Small samples --------------------------------------------------
     tabPanel(
       "5. Small n",
@@ -276,7 +277,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 6. Circular analysis ----------------------------------------------
     tabPanel(
       "6. Circular",
@@ -295,8 +296,9 @@ ui <- fluidPage(
               "just regression to the mean. The effect is manufactured by choosing ",
               "the groups from the very same noisy data being analysed. Lower the ",
               "reliability (a noisier test) and the fake crossover gets stronger."),
-            sliderInput("t6_rel", "Test-retest reliability:", value = 0.5, min = 0, max = 0.99, step = 0.01),
-            sliderInput("t6_n",   "Number of subjects:",      value = 60,  min = 20, max = 200),
+            sliderInput("t6_n",   "Number of athletes:", value = 40, min = 10, max = 200),
+            sliderInput("t6_rel", "Test reliability (0 = pure noise, 1 = perfect):",
+                        value = 0.5, min = 0, max = 1, step = 0.05),
             actionButton("t6_new", "Resample")
           )
         ),
@@ -307,7 +309,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 7. p-hacking ------------------------------------------------------
     tabPanel(
       "7. p-hacking",
@@ -317,39 +319,28 @@ ui <- fluidPage(
           width = 4,
           wellPanel(
             p(strong("The mistake")),
-            p("This is one fake experiment comparing two groups on data that ",
-              "are pure noise - there is no real effect at all. But a researcher ",
-              "hoping for a significant result has several defensible-looking ",
-              "choices, and each combination is one 'analysis path':"),
-            tags$ul(
-              tags$li("report Outcome A or Outcome B,"),
-              tags$li("keep all the data or remove the most extreme point,"),
-              tags$li("adjust for a covariate or not.")
-            ),
-            p("That is 2 x 2 x 2 = 8 paths. The bars show the p-value for every ",
-              "path; the marked bar is your current choice. None of these was ",
-              "decided in advance. If you are free to try them all and report ",
-              "whichever dips below 0.05, you will often 'find' significance in ",
-              "data that contain nothing - this is p-hacking. Use Resample to ",
-              "draw a fresh noise dataset and see how often some path crosses the line."),
-            selectInput("t7_outcome", "Outcome measure:",
-                        c("Outcome A" = "A", "Outcome B" = "B")),
-            checkboxInput("t7_excl", "Remove the most extreme point", FALSE),
-            checkboxInput("t7_cov",  "Adjust for a covariate", FALSE),
-            actionButton("t7_new", "Resample")
+            p("A researcher tries many different analyses on the same dataset - ",
+              "different outcomes, excluding 'outliers', adding covariates - and ",
+              "reports whichever one gives p < 0.05. Each choice is defensible on ",
+              "its own, but together they inflate the false-positive rate far above 5%."),
+            radioButtons("t7_outcome", "Which outcome variable?",
+                         c("Outcome A" = "A", "Outcome B" = "B")),
+            checkboxInput("t7_excl", "Exclude the most extreme data point", FALSE),
+            checkboxInput("t7_cov",  "Include a covariate in the model", FALSE),
+            actionButton("t7_new", "New dataset")
           )
         ),
         column(
           width = 8,
           fluidRow(
-            column(width = 6, plotOutput("t7_raw",  height = "440px")),
-            column(width = 6, plotOutput("t7_plot", height = "440px"))
+            column(width = 6, plotOutput("t7_plot", height = "440px")),
+            column(width = 6, plotOutput("t7_raw",  height = "440px"))
           ),
           wellPanel(div(uiOutput("t7_verdict"), align = "justify"))
         )
       )
     ),
-    
+
     # ---- 8. Multiple comparisons -------------------------------------------
     tabPanel(
       "8. Multiplicity",
@@ -377,7 +368,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 9. Non-significant results ----------------------------------------
     tabPanel(
       "9. Non-sig",
@@ -405,7 +396,7 @@ ui <- fluidPage(
         )
       )
     ),
-    
+
     # ---- 10. Correlation vs causation --------------------------------------
     tabPanel(
       "10. Causation",
@@ -436,14 +427,91 @@ ui <- fluidPage(
           wellPanel(div(uiOutput("t10_verdict"), align = "justify"))
         )
       )
-    )
-  )
-)
+    ),
+
+    # ---- 11. Filtering bias ------------------------------------------------
+    tabPanel(
+      "11. Filtering",
+      br(),
+      fluidRow(
+        column(
+          width = 4,
+          wellPanel(
+            p(strong("The mistake")),
+            p("When we study only the top performers from a larger group - elite ",
+              "athletes, top students, short-listed job applicants - we are working ",
+              "with a filtered slice of the population, not a random one. This ",
+              "filtering can ", strong("create a negative correlation"), " between two ",
+              "traits even when those traits are unrelated, or even positively ",
+              "correlated, in the full population."),
+            p("Think of it like this: once someone has cleared a high bar, having an ",
+              "exceptional score on one dimension means they didn't need to be as ",
+              "exceptional on the other to still make the cut. Among the elite group, ",
+              "high effort and high talent become a trade-off - not because they are ",
+              "really opposed, but because the filtering process made them look that way."),
+            p("This is sometimes called ", strong("Berkson's paradox"), " or ",
+              strong("selection bias."), " It is especially common in sports science, ",
+              "talent research, and any field that studies elite or clinical groups ",
+              "in isolation from the wider population."),
+            hr(),
+            sliderInput("t11_n",
+                        "Population size:",
+                        value = 800, min = 200, max = 5000, step = 100),
+            sliderInput("t11_pct",
+                        "Selection threshold (top X%):",
+                        value = 80, min = 1, max = 99, step = 1),
+            sliderInput("t11_rho",
+                        "True population correlation (\u03c1):",
+                        value = 0.10, min = 0.0, max = 0.90, step = 0.05),
+            radioButtons("t11_method",
+                         "Filter method:",
+                         choices = c("Composite score (effort + talent)"  = "composite",
+                                     "Both axes independently"             = "both"),
+                         selected = "composite"),
+            actionButton("t11_new", "Resample")
+          )
+        ),
+        column(
+          width = 8,
+          # Summary stats row
+          wellPanel(
+            fluidRow(
+              column(3,
+                     p("Population correlation",
+                       style = "color:#555; margin-bottom:2px; font-size:13px;"),
+                     uiOutput("t11_r_pop")),
+              column(3,
+                     p("Elite correlation",
+                       style = "color:#555; margin-bottom:2px; font-size:13px;"),
+                     uiOutput("t11_r_elite")),
+              column(3,
+                     p("Elite individuals",
+                       style = "color:#555; margin-bottom:2px; font-size:13px;"),
+                     uiOutput("t11_n_elite")),
+              column(3,
+                     p("Filter method",
+                       style = "color:#555; margin-bottom:2px; font-size:13px;"),
+                     uiOutput("t11_method_label"))
+            )
+          ),
+          fluidRow(
+            column(6, plotOutput("t11_plot_pop",   height = "380px")),
+            column(6, plotOutput("t11_plot_elite", height = "380px"))
+          ),
+          br(),
+          wellPanel(div(uiOutput("t11_verdict"), align = "justify"))
+        )
+      )
+    )   # end Tab 11
+
+  )   # end tabsetPanel
+)   # end fluidPage
+
 
 # ============================== SERVER =======================================
 
 server <- function(input, output, session) {
-  
+
   # ---- 1. Control group --------------------------------------------------
   t1_data <- reactive({
     set.seed(101 + input$t1_new)
@@ -455,14 +523,14 @@ server <- function(input, output, session) {
     list(ctrl_pre = ctrl_pre, ctrl_post = ctrl_post,
          trt_pre = trt_pre, trt_post = trt_post)
   })
-  
+
   output$t1_plot <- renderPlot({
     d <- t1_data()
     pts <- list(d$ctrl_pre, d$ctrl_post, d$trt_pre, d$trt_post)
     xs  <- c(1, 2, 4, 5)
     cols <- c(grey, grey, teal, teal)
     yl <- range(unlist(pts)) + c(-1, 1)
-    
+
     plot(NULL, xlim = c(0.5, 5.5), ylim = yl, xaxt = "n",
          xlab = "", ylab = "Measurement",
          main = "Before vs after, with and without a control group",
@@ -478,7 +546,7 @@ server <- function(input, output, session) {
     segments(1, mean(d$ctrl_pre), 2, mean(d$ctrl_post), col = grey,  lwd = 2)
     segments(4, mean(d$trt_pre),  5, mean(d$trt_post),  col = teal,  lwd = 2)
   })
-  
+
   output$t1_verdict <- renderUI({
     d <- t1_data()
     apparent <- mean(d$trt_post) - mean(d$trt_pre)
@@ -491,7 +559,7 @@ server <- function(input, output, session) {
                 round(real, 2), "</b> units. Without a control group you would have ",
                 "credited the whole rise to the treatment."))
   })
-  
+
   # ---- 2. Comparing effects ----------------------------------------------
   t2_data <- reactive({
     set.seed(202 + input$t2_new)
@@ -500,12 +568,12 @@ server <- function(input, output, session) {
     D <- rnorm(n, input$t2_eff, input$t2_var)
     list(C = C, D = D)
   })
-  
+
   output$t2_plot <- renderPlot({
     d  <- t2_data()
     sC <- mean_ci(d$C); sD <- mean_ci(d$D)
     yl <- range(c(d$C, d$D)) + c(-0.5, 0.5)
-    
+
     plot(NULL, xlim = c(0.5, 2.5), ylim = yl, xaxt = "n",
          xlab = "", ylab = "Effect (difference from zero)",
          main = "Each group tested against zero, then against each other",
@@ -517,7 +585,48 @@ server <- function(input, output, session) {
     draw_ci(1, sC, teal)
     draw_ci(2, sD, orange)
   })
-  
+
+  # Tab 2: repeat the experiment 1000 times, wrong method vs correct method
+  t2_rates <- reactive({
+    set.seed(202 + input$t2_new)
+    n   <- input$t2_n
+    eff <- input$t2_eff
+    v   <- input$t2_var
+    runs <- 1000
+    tc1 <- qt(0.975, n - 1)
+    wrong <- 0L; right <- 0L
+    for (i in seq_len(runs)) {
+      C <- rnorm(n, eff, 1)
+      D <- rnorm(n, eff, v)
+      sigC <- abs(mean(C) / (sd(C) / sqrt(n))) > tc1
+      sigD <- abs(mean(D) / (sd(D) / sqrt(n))) > tc1
+      vC <- var(C); vD <- var(D)
+      se  <- sqrt(vC / n + vD / n)
+      tCD <- (mean(C) - mean(D)) / se
+      df  <- (vC / n + vD / n)^2 /
+        ((vC / n)^2 / (n - 1) + (vD / n)^2 / (n - 1))
+      if (xor(sigC, sigD))          wrong <- wrong + 1L
+      if (abs(tCD) > qt(0.975, df)) right <- right + 1L
+    }
+    c(wrong = wrong / runs, right = right / runs)
+  })
+
+  output$t2_sim <- renderPlot({
+    r   <- t2_rates()
+    pct <- round(100 * r)
+    bp  <- barplot(c(r["wrong"], r["right"]) * 100,
+                   col = c(orange, teal), border = "white", ylim = c(0, 100),
+                   names.arg = c("Wrong way", "Correct way"),
+                   ylab = "% of 1000 studies 'finding' a difference",
+                   main = "Same mean: every 'difference' is a false alarm",
+                   cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1, cex.names = 1.3)
+    abline(h = 5, col = "black", lty = 2, lwd = 2)
+    text(bp, c(r["wrong"], r["right"]) * 100 + 5,
+         labels = paste0(pct, "%"), cex = 1.6, font = 2)
+    legend("topright", bty = "n", lty = 2, lwd = 2, col = "black",
+           legend = "5% (what we should see)")
+  })
+
   output$t2_verdict <- renderUI({
     d  <- t2_data()
     pC <- t.test(d$C, mu = 0)$p.value
@@ -535,66 +644,23 @@ server <- function(input, output, session) {
       "should be near 5%, because the two groups really do have the same mean. ",
       "A difference in significance is not a significant difference."))
   })
-  
-  # Tab 2: repeat the experiment 1000 times, wrong method vs correct method
-  t2_rates <- reactive({
-    set.seed(202 + input$t2_new)
-    n   <- input$t2_n
-    eff <- input$t2_eff
-    v   <- input$t2_var
-    runs <- 1000
-    tc1 <- qt(0.975, n - 1)        # significance cutoff for each group vs zero
-    wrong <- 0L; right <- 0L
-    for (i in seq_len(runs)) {
-      C <- rnorm(n, eff, 1)
-      D <- rnorm(n, eff, v)
-      sigC <- abs(mean(C) / (sd(C) / sqrt(n))) > tc1
-      sigD <- abs(mean(D) / (sd(D) / sqrt(n))) > tc1
-      # Welch's unequal-variance t-test for the direct comparison
-      vC <- var(C); vD <- var(D)
-      se  <- sqrt(vC / n + vD / n)
-      tCD <- (mean(C) - mean(D)) / se
-      df  <- (vC / n + vD / n)^2 /
-        ((vC / n)^2 / (n - 1) + (vD / n)^2 / (n - 1))
-      if (xor(sigC, sigD))          wrong <- wrong + 1L
-      if (abs(tCD) > qt(0.975, df)) right <- right + 1L
-    }
-    c(wrong = wrong / runs, right = right / runs)
-  })
-  
-  output$t2_sim <- renderPlot({
-    r   <- t2_rates()
-    pct <- round(100 * r)
-    bp  <- barplot(c(r["wrong"], r["right"]) * 100,
-                   col = c(orange, teal), border = "white", ylim = c(0, 100),
-                   names.arg = c("Wrong way", "Correct way"),
-                   ylab = "% of 1000 studies 'finding' a difference",
-                   main = "Same mean: every 'difference' is a false alarm",
-                   cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1, cex.names = 1.3)
-    abline(h = 5, col = "black", lty = 2, lwd = 2)
-    text(bp, c(r["wrong"], r["right"]) * 100 + 5,
-         labels = paste0(pct, "%"), cex = 1.6, font = 2)
-    legend("topright", bty = "n", lty = 2, lwd = 2, col = "black",
-           legend = "5% (what we should see)")
-  })
-  
-  # ---- 3. Units of analysis ----------------------------------------------
-  # Tab 3: one simulated pre-post dataset, analysed correctly vs pooled
+
+  # ---- 3. Pseudoreplication ----------------------------------------------
   t3_data <- reactive({
-    set.seed(15 + input$t3_new)             # set.seed tuned for N=10 and 2 measurements to yield fallacy
+    set.seed(15 + input$t3_new)
     N <- input$t3_subj
     m <- input$t3_obs
-    X    <- rnorm(N)                        # clinical parameter (one per subject)
-    subj <- 0.5 * X + rnorm(N, 0, 0.85)     # subject's underlying measure level
+    X    <- rnorm(N)
+    subj <- 0.5 * X + rnorm(N, 0, 0.85)
     Y <- matrix(NA, N, m)
-    for (i in 1:N) Y[i, ] <- subj[i] + rnorm(m, 0, 0.2)  # small within-subject noise
+    for (i in 1:N) Y[i, ] <- subj[i] + rnorm(m, 0, 0.2)
     list(X = X,
-         Ycorrect = rowMeans(Y),            # one honest value per subject
-         Xpool = rep(X, each = m),          # clinical value repeated per measurement
-         Ypool = as.vector(t(Y)),           # every repeat counted separately
+         Ycorrect = rowMeans(Y),
+         Xpool = rep(X, each = m),
+         Ypool = as.vector(t(Y)),
          N = N, m = m)
   })
-  
+
   output$t3_scatter <- renderPlot({
     d  <- t3_data()
     rc <- cor(d$X, d$Ycorrect)
@@ -603,7 +669,7 @@ server <- function(input, output, session) {
     crp <- crit_r(d$N * d$m - 2)
     sigc <- abs(rc) > crc
     sigp <- abs(rp) > crp
-    
+
     plot(d$Xpool, d$Ypool, pch = 1, col = "gray70", cex = 1.1,
          xlab = "Clinical parameter", ylab = "Measure",
          main = "Same data, two ways to count it",
@@ -619,45 +685,46 @@ server <- function(input, output, session) {
              paste0("Pooled: r = ", round(rp, 2),
                     if (sigp) " (significant)" else " (not significant)")))
   })
-  
+
   output$t3_plot <- renderPlot({
     nsubj <- input$t3_subj
     obs   <- input$t3_obs
     df_correct  <- nsubj - 2
     df_inflated <- nsubj * obs - 2
-    
+
     dfseq <- 1:max(60, df_inflated + 5)
     plot(dfseq, crit_r(dfseq), type = "l", lwd = 2, col = blue,
          xlab = "Degrees of freedom", ylab = "Smallest |r| that is 'significant'",
-         main = "Counting measurements instead of subjects lowers the bar",
-         cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1, ylim = c(0, 1), bty = "l")
+         main = "More pseudoreplication = lower bar for significance",
+         cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1, bty = "l")
     points(df_correct,  crit_r(df_correct),  pch = 19, col = teal,   cex = 2)
     points(df_inflated, crit_r(df_inflated), pch = 19, col = orange, cex = 2)
-    abline(v = df_correct,  col = teal,   lty = 3)
-    abline(v = df_inflated, col = orange, lty = 3)
-    legend("topright", bty = "n", pch = 19, cex = 1.1,
-           col = c(teal, orange),
-           legend = c("Correct (one value per subject)",
-                      "Inflated (every measurement counted)"))
+    legend("topright", bty = "n", cex = 1.0, pch = 19, col = c(teal, orange),
+           legend = c(paste0("Correct (df = ", df_correct, ")"),
+                      paste0("Pooled  (df = ", df_inflated, ")")))
   })
-  
+
+  sig <- function(r, cr) if (abs(r) > cr) "significant" else "not significant"
+
   output$t3_verdict <- renderUI({
-    d <- t3_data()
-    N <- d$N; m <- d$m
-    rc <- cor(d$X, d$Ycorrect); rp <- cor(d$Xpool, d$Ypool)
-    crc <- crit_r(N - 2); crp <- crit_r(N * m - 2)
-    sig <- function(r, cr) if (abs(r) > cr) "significant" else "not significant"
-    HTML(paste0("With ", N, " subjects, the honest analysis uses one value per subject: ",
-                N - 2, " degrees of freedom, so a correlation must reach |r| = <b>",
-                round(crc, 2), "</b> to count. Here the correct correlation is r = <b>",
-                round(rc, 2), "</b> (<b>", sig(rc, crc), "</b>). Pooling all ", N * m,
-                " measurements as if independent gives ", N * m - 2,
-                " degrees of freedom and drops the bar to |r| = <b>", round(crp, 2),
-                "</b>; the pooled correlation is r = <b>", round(rp, 2), "</b> (<b>", sig(rp, crp),
-                "</b>). The relationship is the same - pooling just double-counts the ",
-                "non-independent repeats and lowers the bar for significance."))
+    d   <- t3_data()
+    N   <- d$N; m <- d$m
+    rc  <- round(cor(d$X, d$Ycorrect), 2)
+    rp  <- round(cor(d$Xpool, d$Ypool), 2)
+    crc <- round(crit_r(N - 2), 2)
+    crp <- round(crit_r(N * m - 2), 2)
+    HTML(paste0(
+      "With <b>", N, "</b> subjects and <b>", m, "</b> measurements each, ",
+      "the correct analysis uses <b>", N - 2, "</b> degrees of freedom and requires |r| > <b>",
+      crc, "</b> for significance. ",
+      "Here the correct correlation is r = <b>", rc, "</b> (<b>", sig(rc, crc), "</b>). ",
+      "Pooling all ", N * m, " measurements as if independent gives ", N * m - 2,
+      " degrees of freedom and drops the bar to |r| = <b>", crp,
+      "</b>; the pooled correlation is r = <b>", rp, "</b> (<b>", sig(rp, crp),
+      "</b>). The relationship is the same - pooling just double-counts the ",
+      "non-independent repeats and lowers the bar for significance."))
   })
-  
+
   # ---- 4. Spurious correlations ------------------------------------------
   output$t4_slider <- renderUI({
     if (input$t4_type == "outlier")
@@ -665,12 +732,12 @@ server <- function(input, output, session) {
     else
       sliderInput("t4_s", "Separation of the two subgroups:", value = 3, min = 0, max = 6, step = 0.5)
   })
-  
+
   t4_base <- reactive({
     set.seed(40 + input$t4_new)
     list(X = rnorm(20, 0, 1), Y = rnorm(20, 0, 1))
   })
-  
+
   t4_data <- reactive({
     b <- t4_base()
     if (input$t4_type == "outlier") {
@@ -687,7 +754,7 @@ server <- function(input, output, session) {
     }
     list(X = X, Y = Y, grp = grp)
   })
-  
+
   output$t4_plot <- renderPlot({
     d <- t4_data()
     r  <- cor(d$X, d$Y)
@@ -702,7 +769,7 @@ server <- function(input, output, session) {
            legend = paste0("r = ", round(r, 2),
                            "   95% CI [", round(ci[1], 2), ", ", round(ci[2], 2), "]"))
   })
-  
+
   output$t4_verdict <- renderUI({
     d <- t4_data()
     r <- cor(d$X, d$Y)
@@ -718,7 +785,7 @@ server <- function(input, output, session) {
                   "on both variables manufactures a correlation."))
     }
   })
-  
+
   # ---- 5. Small samples --------------------------------------------------
   t5_sim <- reactive({
     set.seed(50 + input$t5_new)
@@ -728,14 +795,13 @@ server <- function(input, output, session) {
     for (i in seq_len(reps)) r[i] <- cor(rnorm(n), rnorm(n))
     r
   })
-  
-  # Tab 5: one example sample at the current sample size
+
   t5_one <- reactive({
     set.seed(51 + input$t5_new)
     n <- input$t5_n
     list(X = rnorm(n), Y = rnorm(n), n = n)
   })
-  
+
   output$t5_scatter <- renderPlot({
     d  <- t5_one()
     r  <- cor(d$X, d$Y)
@@ -754,7 +820,7 @@ server <- function(input, output, session) {
              paste0("critical |r| = ", round(rc, 2)),
              paste0("p = ", signif(p, 2))))
   })
-  
+
   output$t5_plot <- renderPlot({
     r  <- t5_sim()
     n  <- input$t5_n
@@ -767,7 +833,7 @@ server <- function(input, output, session) {
     legend("topright", bty = "n", cex = 1.1, lty = 2, lwd = 2, col = orange,
            legend = paste0("'Significant' beyond |r| = ", round(rc, 2)))
   })
-  
+
   output$t5_verdict <- renderUI({
     r  <- t5_sim()
     n  <- input$t5_n
@@ -782,7 +848,7 @@ server <- function(input, output, session) {
                 ". Small samples can only detect - and so only report - large effects, ",
                 "which is why a big r from a tiny study is not reassuring."))
   })
-  
+
   # ---- 6. Circular analysis ----------------------------------------------
   t6_data <- reactive({
     set.seed(606 + input$t6_new)
@@ -793,34 +859,31 @@ server <- function(input, output, session) {
     high <- pre >= median(pre)
     list(pre = pre, post = post, high = high)
   })
-  
+
   output$t6_plot <- renderPlot({
     d <- t6_data()
     lo_pre  <- mean(d$pre[!d$high]);  lo_post <- mean(d$post[!d$high])
     hi_pre  <- mean(d$pre[d$high]);   hi_post <- mean(d$post[d$high])
     yl <- c(-3.5, 3.5)
-    
+
     plot(NULL, xlim = c(0.7, 2.3), ylim = yl, xaxt = "n",
          xlab = "", ylab = "Score",
          main = "Splitting by baseline creates a fake before/after interaction",
          cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1, bty = "l")
     axis(1, at = c(1, 2), labels = c("Before", "After"), cex.axis = 1.2)
-    
-    # raw data: faint, jittered, colour-coded by selected group
+
     lo_col <- adjustcolor(teal,   alpha.f = 0.35)
     hi_col <- adjustcolor(orange, alpha.f = 0.35)
     points(jitter(rep(1, sum(!d$high)), amount = 0.05), d$pre[!d$high],  pch = 19, col = lo_col, cex = 0.8)
     points(jitter(rep(2, sum(!d$high)), amount = 0.05), d$post[!d$high], pch = 19, col = lo_col, cex = 0.8)
     points(jitter(rep(1, sum(d$high)),  amount = 0.05), d$pre[d$high],   pch = 19, col = hi_col, cex = 0.8)
     points(jitter(rep(2, sum(d$high)),  amount = 0.05), d$post[d$high],  pch = 19, col = hi_col, cex = 0.8)
-    
-    # group means on top
+
     segments(1, lo_pre, 2, lo_post, col = teal,   lwd = 3)
     segments(1, hi_pre, 2, hi_post, col = orange, lwd = 3)
     points(c(1, 2), c(lo_pre, lo_post), pch = 19, col = teal,   cex = 1.8)
     points(c(1, 2), c(hi_pre, hi_post), pch = 19, col = orange, cex = 1.8)
-    
-    # formal test of the interaction, with effect size (Cohen's d on change scores)
+
     chg   <- d$post - d$pre
     ti_p  <- t.test(chg ~ d$high)$p.value
     ch_hi <- chg[d$high]; ch_lo <- chg[!d$high]
@@ -828,45 +891,33 @@ server <- function(input, output, session) {
     sp <- sqrt(((nh - 1) * var(ch_hi) + (nl - 1) * var(ch_lo)) / (nh + nl - 2))
     dval <- abs(mean(ch_lo) - mean(ch_hi)) / sp
     mag  <- if (dval < 0.2) "negligible" else if (dval < 0.5) "small" else
-      if (dval < 0.8) "medium"     else "large"
+      if (dval < 0.8) "medium" else "large"
     legend("topleft", bty = "n", cex = 1.1,
            legend = c(
              paste0("Interaction p = ", signif(ti_p, 2),
                     if (ti_p < 0.05) " (significant)" else " (n.s.)"),
-             paste0("Effect size d = ", round(dval, 2), " (", mag, ")")))   
-    legend("topright", bty = "n", cex = 1.1, lwd = 3,
-           col = c(orange, teal),
-           legend = c("Selected as 'high' before",
-                      "Selected as 'low' before"))
+             paste0("Effect size d = ", round(dval, 2), " (", mag, ")")))
   })
-  
+
   output$t6_verdict <- renderUI({
     d <- t6_data()
-    lo_change <- mean(d$post[!d$high]) - mean(d$pre[!d$high])
-    hi_change <- mean(d$post[d$high])  - mean(d$pre[d$high])
-    chg <- d$post - d$pre
-    ti  <- t.test(chg ~ d$high)
-    p   <- ti$p.value
+    chg   <- d$post - d$pre
+    ti_p  <- t.test(chg ~ d$high)$p.value
     ch_hi <- chg[d$high]; ch_lo <- chg[!d$high]
     nh <- length(ch_hi); nl <- length(ch_lo)
     sp <- sqrt(((nh - 1) * var(ch_hi) + (nl - 1) * var(ch_lo)) / (nh + nl - 2))
-    dval <- abs(mean(ch_lo) - mean(ch_hi)) / sp
-    mag  <- if (dval < 0.2) "negligible" else if (dval < 0.5) "small" else
-      if (dval < 0.8) "medium"     else "large"
-    HTML(paste0("There is no real change here - 'after' is just noise partly ",
-                "correlated with 'before'. Yet the low-baseline group appears to ",
-                "rise by ", round(lo_change, 2), " and the high-baseline group ",
-                "appears to fall by ", round(abs(hi_change), 2),
-                ". The interaction test gives <b>p = ", signif(p, 2),
-                if (p < 0.05) " (significant)" else " (not significant)", "</b>",
-                ", but the effect size is <b>d = ", round(dval, 2), " (", mag,
-                ")</b>. With a large sample the p-value can stay significant even when ",
-                "the effect is trivially small - which is exactly why an effect size ",
-                "matters. This crossover is regression to the mean, manufactured by ",
-                "choosing the groups from the very data being tested; raising the ",
-                "reliability shrinks the effect size toward zero."))
+    dval <- round(abs(mean(ch_lo) - mean(ch_hi)) / sp, 2)
+    HTML(paste0(
+      "The 'interaction' p = <b>", signif(ti_p, 2),
+      if (ti_p < 0.05) "</b> is <b>significant" else "</b> is <b>not significant",
+      "</b>, with an effect size of d = <b>", dval, "</b>. ",
+      "With a large sample the p-value can stay significant even when ",
+      "the effect is trivially small - which is exactly why an effect size ",
+      "matters. This crossover is regression to the mean, manufactured by ",
+      "choosing the groups from the very data being tested; raising the ",
+      "reliability shrinks the effect size toward zero."))
   })
-  
+
   # ---- 7. p-hacking ------------------------------------------------------
   t7_full <- reactive({
     set.seed(707 + input$t7_new)
@@ -877,7 +928,7 @@ server <- function(input, output, session) {
     cov <- rnorm(n)
     data.frame(group, yA, yB, cov)
   })
-  
+
   t7_p <- function(dat, outcome, excl, cov) {
     y <- if (outcome == "A") dat$yA else dat$yB
     g <- dat$group
@@ -892,7 +943,7 @@ server <- function(input, output, session) {
       summary(lm(y ~ g))$coefficients["g", "Pr(>|t|)"]
     }
   }
-  
+
   output$t7_plot <- renderPlot({
     dat <- t7_full()
     combos <- expand.grid(outcome = c("A", "B"),
@@ -902,7 +953,7 @@ server <- function(input, output, session) {
     ps <- mapply(function(o, e, c) t7_p(dat, o, e, c),
                  combos$outcome, combos$excl, combos$cov)
     cur <- t7_p(dat, input$t7_outcome, input$t7_excl, input$t7_cov)
-    
+
     cols <- ifelse(ps < 0.05, orange, blue)
     bp <- barplot(ps, col = cols, border = "white", ylim = c(0, 1),
                   names.arg = seq_along(ps),
@@ -910,7 +961,6 @@ server <- function(input, output, session) {
                   main = "Every analysis of the same noisy data gives a different p",
                   cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1)
     abline(h = 0.05, col = "black", lty = 2, lwd = 2)
-    # mark the currently selected path
     sel <- which(combos$outcome == input$t7_outcome &
                    combos$excl == input$t7_excl &
                    combos$cov  == input$t7_cov)
@@ -918,19 +968,17 @@ server <- function(input, output, session) {
     legend("topright", bty = "n", cex = 1.0, pch = 25, pt.bg = "black",
            legend = "your current choice")
   })
-  
+
   output$t7_raw <- renderPlot({
     dat <- t7_full()
     y  <- if (input$t7_outcome == "A") dat$yA else dat$yB
     g  <- dat$group
     co <- dat$cov
-    
-    # which point would be removed (largest absolute deviation), if any
+
     removed <- if (input$t7_excl) which.max(abs(y - mean(y))) else NA
     keep <- rep(TRUE, length(y))
     if (!is.na(removed)) keep[removed] <- FALSE
-    
-    # values the test actually sees: adjust for the covariate if selected
+
     if (input$t7_cov) {
       fit   <- lm(y[keep] ~ g[keep] + co[keep])
       bcov  <- coef(fit)[3]
@@ -940,37 +988,34 @@ server <- function(input, output, session) {
       yplot <- y
       ylab  <- paste0("Outcome ", input$t7_outcome)
     }
-    
+
     p  <- t7_p(dat, input$t7_outcome, input$t7_excl, input$t7_cov)
     xg <- ifelse(g == 0, 1, 2)
-    
+
     plot(NULL, xlim = c(0.5, 2.5), ylim = c(-3.5, 3.5), xaxt = "n",
          xlab = "", ylab = ylab,
          main = "Data for the path you have selected",
          cex.main = 1.3, cex.lab = 1.1, cex.axis = 1.1, bty = "l")
     axis(1, at = c(1, 2), labels = c("Group 1", "Group 2"), cex.axis = 1.2)
-    
-    # kept points: faint, jittered
+
     kcol <- adjustcolor(blue, alpha.f = 0.45)
     points(jitter(xg[keep], amount = 0.08), yplot[keep], pch = 19, col = kcol, cex = 1.1)
-    
-    # the removed point, if any
+
     if (!is.na(removed)) {
       points(xg[removed], yplot[removed], pch = 1, col = "red", cex = 2, lwd = 2)
       text(xg[removed], yplot[removed], "removed", pos = 4, col = "red", cex = 0.9)
     }
-    
-    # group means (computed on the kept data only)
+
     for (gg in c(1, 2)) {
       idx <- xg == gg & keep
       draw_ci(gg, mean_ci(yplot[idx]), teal)
     }
-    
+
     legend("topleft", bty = "n", cex = 1.0,
            legend = paste0("p = ", signif(p, 2),
                            if (p < 0.05) " (significant)" else " (not significant)"))
   })
-  
+
   output$t7_verdict <- renderUI({
     dat <- t7_full()
     combos <- expand.grid(outcome = c("A", "B"),
@@ -983,13 +1028,9 @@ server <- function(input, output, session) {
     nsig <- sum(ps < 0.05)
     HTML(paste0(
       "Your current path gives <b>p = ", signif(cur, 2),
-      if (cur < 0.05) " - significant!" else " - not significant.", "</b>",
-      " Remember the data are pure noise: there is genuinely nothing to find. ",
-      "Yet across the 8 analysis paths, <b>", nsig,
-      if (nsig == 1) " of them falls" else " of them fall",
-      " below 0.05</b>. A single honest test has a 5% false-positive rate, but ",
-      "trying 8 and reporting the best inflates that to roughly ",
-      round(100 * (1 - 0.95^8)), "%. If you pick the path after seeing the ",
+      if (cur < 0.05) " - significant!" else " - not significant",
+      "</b>. Across all 8 paths, <b>", nsig, " out of 8</b> are significant at p < 0.05. ",
+      "If you pick the path after seeing the ",
       "results, 'significance' reflects the searching, not the data. Use ",
       "Resample to see how the number of 'significant' paths varies.",
       "<br><br><b><i>These analysis choices are shown only to explain why ",
@@ -997,13 +1038,13 @@ server <- function(input, output, session) {
       "advised: decide your analysis before seeing the data, and report ",
       "every choice you made.</i></b>"))
   })
-  
+
   # ---- 8. Multiple comparisons -------------------------------------------
   t8_p <- reactive({
     set.seed(80 + input$t8_new)
-    runif(input$t8_m)         # p-values from tests on pure noise are uniform
+    runif(input$t8_m)
   })
-  
+
   output$t8_squares <- renderPlot({
     p <- t8_p()
     m <- length(p)
@@ -1011,7 +1052,7 @@ server <- function(input, output, session) {
     xs <- ((seq_len(m) - 1) %% g) + 1
     ys <- g - ((seq_len(m) - 1) %/% g)
     cols <- ifelse(p < 0.05, orange, "gray85")
-    
+
     plot(NULL, xlim = c(0.5, g + 0.5), ylim = c(0.5, g + 0.5),
          xaxt = "n", yaxt = "n", xlab = "", ylab = "",
          main = paste0(m, " tests on pure noise"),
@@ -1019,34 +1060,32 @@ server <- function(input, output, session) {
     symbols(xs, ys, squares = rep(0.9, m), inches = FALSE, add = TRUE,
             bg = cols, fg = "white")
   })
-  
+
   output$t8_curve <- renderPlot({
     m     <- input$t8_m
     alpha <- 0.05
     nn    <- 1:100
-    fwer  <- 1 - (1 - alpha)^nn            # uncorrected
-    bonf  <- 1 - (1 - alpha / nn)^nn       # Bonferroni-corrected
-    
+    fwer  <- 1 - (1 - alpha)^nn
+    bonf  <- 1 - (1 - alpha / nn)^nn
+
     plot(nn, fwer, type = "l", lwd = 3, col = orange, ylim = c(0, 1.05),
          xlab = "Number of tests", ylab = "Chance of at least one false positive",
          main = "Why correction matters",
          cex.main = 1.3, cex.lab = 1.2, cex.axis = 1.1, bty = "l")
     lines(nn, bonf, lwd = 3, col = teal)
     abline(h = alpha, col = "gray60", lty = 2)
-    
-    # mark the current slider position on both curves
-    points(m, 1 - (1 - alpha)^m,        pch = 19, col = orange, cex = 1.8)
-    points(m, 1 - (1 - alpha / m)^m,    pch = 19, col = teal,   cex = 1.8)
+
+    points(m, 1 - (1 - alpha)^m,     pch = 19, col = orange, cex = 1.8)
+    points(m, 1 - (1 - alpha / m)^m, pch = 19, col = teal,   cex = 1.8)
     abline(v = m, col = "gray80", lty = 3)
-    
-    # equation for the uncorrected curve, in the upper-left white space
+
     text(2, 1.02, expression(P(at~least~one~false~positive) == 1 - (1 - alpha)^n),
          col = orange, cex = 1.1, adj = 0)
-    
+
     legend("topright", bty = "n", cex = 1.1, lwd = 3, inset = c(0, 0.15),
            col = c(orange, teal),
            legend = c("No correction", "Bonferroni correction"))
-    
+
     text(52, 0.46, "Bonferroni correction", col = teal, font = 2, cex = 1.1, adj = 0)
     text(52, 0.39, expression(paste(alpha[adjusted], " = ", alpha / n, " = ", 0.05 / n)),
          col = teal, cex = 1.1, adj = 0)
@@ -1056,7 +1095,7 @@ server <- function(input, output, session) {
                 "false-positive rate at about 5%."),
          col = "gray30", cex = 0.95, adj = c(0, 1))
   })
-  
+
   output$t8_verdict <- renderUI({
     m    <- input$t8_m
     fwer <- 1 - (0.95)^m
@@ -1072,22 +1111,22 @@ server <- function(input, output, session) {
                 "%</b> (the teal curve). The key idea: the more tests you run, the stricter ",
                 "each one must be to keep your overall error rate at 5%."))
   })
-  
+
   # ---- 9. Non-significant results ----------------------------------------
   t9_data <- reactive({
     eff <- input$t9_eff
     ns  <- c(8, 16, 32, 64, 128)
     set.seed(909 + input$t9_new)
-    pool <- rnorm(max(ns), eff, 1)                       # one underlying sample
-    ests <- lapply(ns, function(n) mean_ci(pool[1:n]))   # smaller studies are subsets
+    pool <- rnorm(max(ns), eff, 1)
+    ests <- lapply(ns, function(n) mean_ci(pool[1:n]))
     list(ns = ns, ests = ests, eff = eff)
   })
-  
+
   output$t9_plot <- renderPlot({
     d   <- t9_data()
     ns  <- d$ns; ests <- d$ests; eff <- d$eff
     yr <- range(c(sapply(ests, function(s) c(s$lo, s$hi)), 0, eff)) + c(-0.1, 0.1)
-    
+
     plot(NULL, xlim = c(yr[1], yr[2]), ylim = c(0.5, length(ns) + 0.5),
          yaxt = "n", xlab = "Estimated effect (95% CI)", ylab = "",
          main = "Each study: estimate and its interval",
@@ -1105,16 +1144,15 @@ server <- function(input, output, session) {
     legend("bottomright", bty = "n", cex = 1.0, lwd = 2, col = c(blue, orange),
            legend = c("CI excludes 0 (significant)", "CI includes 0 (non-significant)"))
   })
-  
+
   output$t9_width <- renderPlot({
     d  <- t9_data()
     ns <- d$ns
-    obs_hw <- sapply(d$ests, function(s) (s$hi - s$lo) / 2)   # observed half-widths
-    
-    # theoretical 95% CI half-width for a mean with SD = 1
+    obs_hw <- sapply(d$ests, function(s) (s$hi - s$lo) / 2)
+
     nn   <- seq(min(ns), max(ns))
     theo <- qt(0.975, nn - 1) / sqrt(nn)
-    
+
     plot(nn, theo, type = "l", lwd = 3, col = teal,
          ylim = c(0, max(obs_hw, theo)),
          xlab = "Sample size (n)", ylab = "95% CI half-width",
@@ -1125,11 +1163,12 @@ server <- function(input, output, session) {
            lwd = c(3, NA), pch = c(NA, 19), col = c(teal, blue),
            legend = c("Theoretical (1.96-ish / \u221an)", "This run's studies"))
   })
-  
+
   output$t9_verdict <- renderUI({
     eff <- input$t9_eff
     if (eff == 0) {
-      HTML(paste0("Here the true effect really is <b>zero</b>. Even so, notice the small ",
+      HTML(paste0("Here the true effect really is <b>zero</b>. ",
+                  "Even so, notice the small ",
                   "studies cannot prove that - their intervals are wide. A non-",
                   "significant result with a small sample is uninformative, not ",
                   "proof of 'no effect'."))
@@ -1141,21 +1180,20 @@ server <- function(input, output, session) {
                   "effect size and its confidence interval, not only the p-value."))
     }
   })
-  
+
   # ---- 10. Correlation vs causation --------------------------------------
   t10_data <- reactive({
     set.seed(1010)
     n <- 80
     s <- input$t10_str
-    Z <- rnorm(n)                                   # national wealth (standardised)
-    Xz <- s * Z + sqrt(1 - s^2) * rnorm(n)          # chocolate, driven by wealth
-    Yz <- s * Z + sqrt(1 - s^2) * rnorm(n)          # Nobels, driven by wealth (X has NO effect)
-    # rescale to realistic, positive units
-    X <- round(pmax(0, 5 + 2.2 * Xz), 1)            # kg of chocolate per person / year
-    Y <- round(pmax(0, 8 + 3 * Yz), 1)              # Nobel laureates per 10 million people
+    Z <- rnorm(n)
+    Xz <- s * Z + sqrt(1 - s^2) * rnorm(n)
+    Yz <- s * Z + sqrt(1 - s^2) * rnorm(n)
+    X <- round(pmax(0, 5 + 2.2 * Xz), 1)
+    Y <- round(pmax(0, 8 + 3 * Yz), 1)
     list(X = X, Y = Y, Z = Z)
   })
-  
+
   output$t10_plot <- renderPlot({
     d <- t10_data()
     if (input$t10_ctrl) {
@@ -1182,7 +1220,7 @@ server <- function(input, output, session) {
     mtext("Illustrative simulated data", side = 1, line = 3.8,
           adj = 1, cex = 0.85, col = "gray50")
   })
-  
+
   output$t10_verdict <- renderUI({
     d <- t10_data()
     r_raw <- cor(d$X, d$Y)
@@ -1202,7 +1240,219 @@ server <- function(input, output, session) {
                   "for national wealth and watch the correlation collapse."))
     }
   })
-}
+
+  # ---- 11. Filtering bias ------------------------------------------------
+  t11_data <- reactive({
+    set.seed(1100 + input$t11_new)
+    n   <- input$t11_n
+    rho <- input$t11_rho
+    effort <- rnorm(n)
+    talent <- rho * effort + sqrt(1 - rho^2) * rnorm(n)
+    list(effort = effort, talent = talent)
+  })
+
+  t11_elite <- reactive({
+    d   <- t11_data()
+    pct <- input$t11_pct / 100
+    if (input$t11_method == "composite") {
+      composite <- d$effort + d$talent
+      thresh    <- quantile(composite, pct)
+      elite     <- composite >= thresh
+    } else {
+      thresh_e  <- quantile(d$effort, pct)
+      thresh_t  <- quantile(d$talent, pct)
+      elite     <- d$effort >= thresh_e & d$talent >= thresh_t
+    }
+    elite
+  })
+
+  output$t11_r_pop <- renderUI({
+    d <- t11_data()
+    r <- round(cor(d$effort, d$talent), 2)
+    col <- if (r >= 0) blue else "#B22222"
+    tags$p(style = paste0("font-size:28px; font-weight:700; color:", col, "; margin:0;"),
+           if (r >= 0) paste0("+", r) else as.character(r))
+  })
+
+  output$t11_r_elite <- renderUI({
+    d     <- t11_data()
+    elite <- t11_elite()
+    if (sum(elite) < 3) return(tags$p(style = "font-size:28px; font-weight:700; margin:0;", "\u2014"))
+    r   <- round(cor(d$effort[elite], d$talent[elite]), 2)
+    col <- if (r >= 0) blue else "#B22222"
+    tags$p(style = paste0("font-size:28px; font-weight:700; color:", col, "; margin:0;"),
+           if (r >= 0) paste0("+", r) else as.character(r))
+  })
+
+  output$t11_n_elite <- renderUI({
+    elite <- t11_elite()
+    tags$p(style = "font-size:28px; font-weight:700; color:#222; margin:0;",
+           sum(elite))
+  })
+
+  output$t11_method_label <- renderUI({
+    label <- if (input$t11_method == "composite") "composite" else "both axes"
+    tags$p(style = "font-size:18px; font-weight:600; color:#222; margin:0; padding-top:5px;",
+           label)
+  })
+
+  output$t11_plot_pop <- renderPlot({
+    d     <- t11_data()
+    elite <- t11_elite()
+    r_pop <- round(cor(d$effort, d$talent), 2)
+    
+    col_pts <- ifelse(elite,
+                      adjustcolor(blue,     alpha.f = 0.80),
+                      adjustcolor("gray55", alpha.f = 0.40))
+    cex_pts <- ifelse(elite, 1.1, 0.65)
+    
+    par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
+    plot(d$effort, d$talent,
+         pch = 19, col = col_pts, cex = cex_pts,
+         xlab = "Effort", ylab = "Talent",
+         main = "Full population",
+         bty = "l")
+    
+    # Draw filter boundary
+    if (input$t11_method == "composite") {
+      # Diagonal cut: effort + talent = threshold
+      composite  <- d$effort + d$talent
+      thresh_c   <- quantile(composite, input$t11_pct / 100)
+      # Line: talent = thresh_c - effort
+      xl <- par("usr")[1:2]
+      lines(xl, thresh_c - xl, col = "#C0392B", lwd = 2, lty = 2)
+      # Shade region below the line (non-elite side)
+      polygon(c(xl[1], xl[2], xl[2], xl[1]),
+              c(thresh_c - xl[1], thresh_c - xl[2],
+                par("usr")[3], par("usr")[3]),
+              col = adjustcolor("#C0392B", alpha.f = 0.06), border = NA)
+    } else {
+      # Rectangular cut: vertical + horizontal threshold lines
+      thresh_e <- quantile(d$effort, input$t11_pct / 100)
+      thresh_t <- quantile(d$talent, input$t11_pct / 100)
+      abline(v = thresh_e, col = "#C0392B", lwd = 2, lty = 2)
+      abline(h = thresh_t, col = "#C0392B", lwd = 2, lty = 2)
+      # Shade the three non-elite regions
+      usr <- par("usr")
+      polygon(c(usr[1], thresh_e, thresh_e, usr[1]),
+              c(usr[3], usr[3], usr[4], usr[4]),
+              col = adjustcolor("#C0392B", alpha.f = 0.06), border = NA)
+      polygon(c(thresh_e, usr[2], usr[2], thresh_e),
+              c(usr[3], usr[3], thresh_t, thresh_t),
+              col = adjustcolor("#C0392B", alpha.f = 0.06), border = NA)
+    }
+    
+    fit <- lm(d$talent ~ d$effort)
+    abline(fit, col = blue, lwd = 2.2)
+    
+    legend("topleft", bty = "n", cex = 0.95,
+           legend = paste0("r (population) = ",
+                           if (r_pop >= 0) paste0("+", r_pop) else r_pop),
+           text.col = blue)
+    
+    legend("bottomright", bty = "n", cex = 0.90,
+           pch = c(19, 19, NA), lty = c(NA, NA, 2),
+           col = c(adjustcolor(blue, 0.80), adjustcolor("gray55", 0.60), "#C0392B"),
+           lwd = c(NA, NA, 2),
+           legend = c("Elite (in population view)", "Below threshold", "Selection boundary"))
+  })
+
+  output$t11_plot_elite <- renderPlot({
+    d     <- t11_data()
+    elite <- t11_elite()
+
+    if (sum(elite) < 3) {
+      plot.new()
+      text(0.5, 0.5, "Too few elite individuals\nto plot.\nTry lowering the threshold.",
+           cex = 1.3, col = "gray50", adj = c(0.5, 0.5))
+      return(invisible(NULL))
+    }
+
+    ef_e <- d$effort[elite]
+    ta_e <- d$talent[elite]
+    r_el <- round(cor(ef_e, ta_e), 2)
+
+    elite_col <- adjustcolor("#C0392B", alpha.f = 0.72)
+
+    par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
+    plot(ef_e, ta_e,
+         pch = 19, col = elite_col, cex = 1.1,
+         xlab = "Effort", ylab = "Talent",
+         main = "Elite individuals only",
+         bty = "l")
+
+    fit_e <- lm(ta_e ~ ef_e)
+    abline(fit_e, col = "#7B241C", lwd = 2.2)
+
+    legend("topleft", bty = "n", cex = 0.95,
+           legend = paste0("r (elite) = ",
+                           if (r_el >= 0) paste0("+", r_el) else r_el),
+           text.col = "#7B241C")
+
+    legend("bottomright", bty = "n", cex = 0.90,
+           pch = 19, col = elite_col,
+           legend = "Elite (zoomed view)")
+  })
+
+  output$t11_verdict <- renderUI({
+    d     <- t11_data()
+    elite <- t11_elite()
+
+    if (sum(elite) < 3)
+      return(HTML("Not enough elite individuals selected to compute a correlation. Try lowering the threshold."))
+
+    r_pop <- round(cor(d$effort, d$talent), 2)
+    ef_e  <- d$effort[elite]
+    ta_e  <- d$talent[elite]
+    r_el  <- round(cor(ef_e, ta_e), 2)
+    n_el  <- sum(elite)
+    n_pop <- length(elite)
+
+    # Significance test on the elite correlation
+    sig_txt <- ""
+    if (n_el > 3) {
+      t_stat <- r_el * sqrt((n_el - 2) / (1 - r_el^2))
+      p_el   <- 2 * pt(-abs(t_stat), df = n_el - 2)
+      p_txt  <- if (p_el < 0.001) "p < 0.001" else paste0("p = ", round(p_el, 3))
+      sig_txt <- if (p_el < 0.05)
+        paste0("The elite correlation is <b>statistically significant</b> (", p_txt, ").")
+      else
+        paste0("The elite correlation is <b>not statistically significant</b> (", p_txt, ").")
+    }
+
+    direction <- if (r_el < r_pop - 0.10)
+      "dropped substantially - and may even be negative"
+    else if (r_el > r_pop + 0.10)
+      "risen above"
+    else
+      "stayed similar to"
+
+    method_desc <- if (input$t11_method == "composite")
+      "a combined effort + talent score (composite filter)"
+    else
+      "independently high effort AND high talent (both-axes filter)"
+
+    HTML(paste0(
+      "In the full population of <b>", n_pop, "</b> simulated individuals, ",
+      "effort and talent have a true correlation of <b>r = ",
+      if (r_pop >= 0) paste0("+", r_pop) else r_pop,
+      "</b>. After selecting the top <b>", input$t11_pct, "%</b> based on ",
+      method_desc, ", we are left with <b>", n_el, "</b> elite individuals. ",
+      "Their correlation has ", direction, " the population value ",
+      "(elite r = <b>", if (r_el >= 0) paste0("+", r_el) else r_el, "</b>). ",
+      sig_txt,
+      "<br><br>This happens because filtering on a combination of two traits ",
+      "introduces a trade-off within the selected group: individuals who scored ",
+      "lower on effort must have scored higher on talent to still make the cut, ",
+      "and vice versa. The filtering process itself - not any real-world relationship - ",
+      "creates this apparent negative link. It is not a property of athletes, students, ",
+      "or any other population; it is a mathematical consequence of how the elite group ",
+      "was defined. Studying only the filtered group and drawing conclusions about the ",
+      "relationship between these traits will lead you badly astray."
+    ))
+  })
+
+}   # end server
 
 # ---- launch -----------------------------------------------------------------
 shinyApp(ui = ui, server = server)
