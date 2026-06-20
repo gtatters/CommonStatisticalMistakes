@@ -1,4 +1,4 @@
-# Ten Common Statistical Mistakes in Science
+# Common Statistical Mistakes in Science
 
 An interactive Shiny app for BIOL 3P96 (Biostatistics) at Brock University.
 
@@ -10,7 +10,7 @@ into hands-on simulations. Each mistake gets its own tab with sliders, a
 **Resample** button, and a plain-language verdict that updates as you
 experiment.
 
-## The ten mistakes
+## The mistakes
 
 1. **No control group** — mistaking a change-over-time for a real treatment effect
 2. **Comparing effects** — "significant here, not there" is not a real difference
