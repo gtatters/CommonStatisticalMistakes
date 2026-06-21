@@ -86,7 +86,7 @@ ui <- fluidPage(
             tags$li(strong("Survivorship bias:"),
                     " we only see the cases that survived a hidden filter."),
             tags$li(strong("Filtering bias:"),
-                    " studying only the top performers can reverse or erase a true correlation."),
+                    " studying only the top performers reveals a Collider effect that can reverse or erase a true correlation."),
             tags$li(strong("Base rate neglect:"),
                     " even an accurate test gives mostly false positives when the condition is rare."),
             tags$li(strong("Small samples:"),
@@ -166,7 +166,7 @@ ui <- fluidPage(
 
     # ======= 1. SURVIVORSHIP BIAS ===========================================
     tabPanel(
-      "1. Survivorship",
+      "1. Survivorship Bias",
       br(),
       fluidRow(
         column(
@@ -231,7 +231,7 @@ ui <- fluidPage(
 
     # ======= 2. FILTERING BIAS ==============================================
     tabPanel(
-      "2. Filtering",
+      "2. Filtering Bias",
       br(),
       fluidRow(
         column(
@@ -267,6 +267,10 @@ ui <- fluidPage(
         ),
         column(
           width = 8,
+          fluidRow(
+            column(6, plotOutput("t2_plot_pop",   height = "380px")),
+            column(6, plotOutput("t2_plot_elite", height = "380px"))
+          ),
           wellPanel(
             fluidRow(
               column(3, p("Population r",
@@ -283,11 +287,6 @@ ui <- fluidPage(
                      uiOutput("t2_method_label"))
             )
           ),
-          fluidRow(
-            column(6, plotOutput("t2_plot_pop",   height = "380px")),
-            column(6, plotOutput("t2_plot_elite", height = "380px"))
-          ),
-          br(),
           wellPanel(div(uiOutput("t2_verdict"), align = "justify"))
         )
       )
@@ -295,7 +294,7 @@ ui <- fluidPage(
 
     # ======= 3. BASE RATE NEGLECT ===========================================
     tabPanel(
-      "3. Base rate",
+      "3. Base Rate",
       br(),
       fluidRow(
         column(
@@ -370,7 +369,7 @@ ui <- fluidPage(
 
     # ======= 5. REGRESSION TO THE MEAN =====================================
     tabPanel(
-      "5. Regression mean",
+      "5. Regression to Mean",
       br(),
       fluidRow(
         column(
@@ -413,7 +412,7 @@ ui <- fluidPage(
 
     # ======= 6. WINNER'S CURSE ==============================================
     tabPanel(
-      "6. Winner's curse",
+      "6. Winner's Curse",
       br(),
       fluidRow(
         column(
@@ -458,7 +457,7 @@ ui <- fluidPage(
 
     # ======= 7. PSEUDOREPLICATION ===========================================
     tabPanel(
-      "7. Pseudorep",
+      "7. Pseudoreplicate",
       br(),
       fluidRow(
         column(
@@ -526,7 +525,7 @@ ui <- fluidPage(
 
     # ======= 9. GARDEN OF FORKING PATHS =====================================
     tabPanel(
-      "9. Forking paths",
+      "9. Forking Paths",
       br(),
       fluidRow(
         column(
@@ -565,7 +564,7 @@ ui <- fluidPage(
 
     # ======= 10. P-HACKING ==================================================
     tabPanel(
-      "10. p-hacking",
+      "10. p-Hacking",
       br(),
       fluidRow(
         column(
@@ -665,7 +664,7 @@ ui <- fluidPage(
 
     # ======= 13. MEASUREMENT ERROR ==========================================
     tabPanel(
-      "13. Measurement error",
+      "13. Measurement Error",
       br(),
       fluidRow(
         column(
@@ -712,7 +711,7 @@ ui <- fluidPage(
 
     # ======= 14. MISSING CONTROL GROUP ======================================
     tabPanel(
-      "14. Controls",
+      "14. Missing Controls",
       br(),
       fluidRow(
         column(
@@ -741,7 +740,7 @@ ui <- fluidPage(
 
     # ======= 15. COMPARING SIGNIFICANCE =====================================
     tabPanel(
-      "15. Compare sig",
+      "15. Comparing Significance",
       br(),
       fluidRow(
         column(
@@ -775,7 +774,7 @@ ui <- fluidPage(
 
     # ======= 16. NON-SIGNIFICANT RESULTS ====================================
     tabPanel(
-      "16. Non-sig",
+      "16. Non-Significant ≠ No Effect",
       br(),
       fluidRow(
         column(
@@ -804,7 +803,7 @@ ui <- fluidPage(
 
     # ======= 17. SPURIOUS CORRELATIONS ======================================
     tabPanel(
-      "17. Spurious",
+      "17. Spurious Correlation",
       br(),
       fluidRow(
         column(
@@ -830,7 +829,7 @@ ui <- fluidPage(
 
     # ======= 18. ECOLOGICAL FALLACY =========================================
     tabPanel(
-      "18. Ecological",
+      "18. Ecological Fallacy",
       br(),
       fluidRow(
         column(
@@ -872,7 +871,7 @@ ui <- fluidPage(
 
     # ======= 19. CORRELATION VS CAUSATION ===================================
     tabPanel(
-      "19. Causation",
+      "19. Correlation ≠ Causation",
       br(),
       fluidRow(
         column(
