@@ -680,11 +680,6 @@ ui <- fluidPage(
             p("The more noise in X, the more the slope shrinks. This means a study ",
               "reporting a 'weak' relationship may actually be measuring a strong one ",
               "through a noisy instrument."),
-            p("When error exists in ", em("both"), " X and Y - common in biology - ",
-              "a method called ", strong("reduced major axis (RMA) regression"),
-              " (also called Model II regression) accounts for measurement error in ",
-              "both variables and gives a less biased slope. Toggle the RMA line below ",
-              "to see how it compares to the OLS fit as you increase noise."),
             hr(),
             sliderInput("t13_n",      "Sample size:",
                         value = 80, min = 20, max = 300, step = 10),
@@ -695,7 +690,13 @@ ui <- fluidPage(
             sliderInput("t13_err_y",  "Measurement error in Y:",
                         value = 0.2, min = 0, max = 2.0, step = 0.1),
             checkboxInput("t13_rma",  "Show RMA (Model II) regression line", FALSE),
-            actionButton("t13_new",   "Resample")
+            actionButton("t13_new",   "Resample"),
+            hr(),
+            p("When error exists in ", em("both"), " X and Y - common in biology - ",
+              "a method called ", strong("reduced major axis (RMA) regression"),
+              " (also called Model II regression) accounts for measurement error in ",
+              "both variables and gives a less biased slope. Toggle the RMA line ",
+              "to see how it compares to the OLS fit as you increase noise.")
           )
         ),
         column(
