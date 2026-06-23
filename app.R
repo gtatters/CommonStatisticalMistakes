@@ -240,18 +240,16 @@ ui <- fluidPage(
             p(strong("The mistake")),
             p("When we study only the top performers from a larger group - elite ",
               "athletes, top students, short-listed job applicants - we are working ",
-              "with a filtered slice of the population, not a random one. This ",
-              "filtering can ", strong("create a negative correlation"), " between two ",
-              "traits even when those traits are unrelated, or even positively ",
-              "correlated, in the full population."),
-            p("Think of it like this: once someone has cleared a high bar, having an ",
-              "exceptional score on one dimension means they did not need to be as ",
-              "exceptional on the other to still make the cut. Among the elite group, ",
-              "high effort and high talent become a trade-off - not because they are ",
-              "really opposed, but because the filtering process made them look that way."),
+              "with a non-random slice of the population. This filtering can ",
+              strong("create a negative correlation"), " between two traits even when",
+              "those traits are unrelated, or positively correlated in the full population."),
+            p("Once someone has cleared a high bar, having an exceptional score on one",
+              "one dimension means they did not need to be as exceptional on the other to still",
+              "make the cut. Among the elite group, high effort and high talent become a",
+              "trade-off, simply because the filtering process made them look that way."),
             p("This is sometimes called ", strong("Berkson's paradox"), " or ",
               strong("selection bias.")),
-            hr(),
+
             sliderInput("t2_n",   "Population size:",
                         value = 800, min = 200, max = 5000, step = 100),
             sliderInput("t2_pct", "Selection threshold (top X%):",
@@ -509,15 +507,18 @@ ui <- fluidPage(
               "to the mean, manufactured by choosing the groups from the very same ",
               "noisy data being analysed."),
             sliderInput("t8_n",   "Number of athletes:",
-                        value = 40, min = 10, max = 200),
+                        value = 30, min = 10, max = 200),
             sliderInput("t8_rel", "Test reliability (0 = pure noise, 1 = perfect):",
-                        value = 0.5, min = 0, max = 0.99, step = 0.05),
+                        value = 0.3, min = 0, max = 0.99, step = 0.05),
             actionButton("t8_new", "Resample")
           )
         ),
         column(
           width = 8,
-          plotOutput("t8_plot", height = "440px"),
+          fluidRow(
+            column(6, plotOutput("t8_plot", height = "400px")),
+            column(6, plotOutput("t8_sim",  height = "400px"))
+          ),
           wellPanel(div(uiOutput("t8_verdict"), align = "justify"))
         )
       )
@@ -1361,6 +1362,21 @@ server <- function(input, output, session) {
     post <- rel * pre + sqrt(1 - rel^2) * rnorm(n)
     list(pre = pre, post = post, high = pre >= median(pre))
   })
+
+  # 1000-simulation reactive — reruns when n or reliability changes
+  t8_sims <- reactive({
+    n <- input$t8_n; rel <- input$t8_rel; nsim <- 1000
+    p_vals <- numeric(nsim)
+    for (i in seq_len(nsim)) {
+      pre  <- rnorm(n)
+      post <- rel * pre + sqrt(1 - rel^2) * rnorm(n)
+      high <- pre >= median(pre)
+      chg  <- post - pre
+      p_vals[i] <- tryCatch(t.test(chg ~ high)$p.value, error = function(e) NA)
+    }
+    p_vals[!is.na(p_vals)]
+  })
+
   output$t8_plot <- renderPlot({
     d <- t8_data()
     lo_pre <- mean(d$pre[!d$high]); lo_post <- mean(d$post[!d$high])
@@ -1388,16 +1404,42 @@ server <- function(input, output, session) {
            legend = c(paste0("Interaction p = ", signif(ti_p, 2), if (ti_p < 0.05) " (significant)" else " (n.s.)"),
                       paste0("Effect size d = ", round(dval, 2), " (", mag, ")")))
   })
+
+  output$t8_sim <- renderPlot({
+    p_vals  <- t8_sims()
+    n_sig   <- sum(p_vals < 0.05)
+    pct_sig <- round(100 * n_sig / length(p_vals))
+    bar_cols <- ifelse(
+      seq(0, 0.95, by = 0.05) < 0.05, orange, "gray85"
+    )
+    h <- hist(p_vals, breaks = seq(0, 1, by = 0.05), plot = FALSE)
+    par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
+    plot(h, col = bar_cols, border = "white",
+         xlab = "Interaction p-value", ylab = "Count",
+         main = "1000 simulated experiments",
+         las = 1, bty = "l",
+         ylim = c(0, max(h$counts) * 1.3))
+    abline(v = 0.05, col = "red", lty = 2, lwd = 2)
+    text(0.5, max(h$counts) * 1.2,
+         paste0(pct_sig, "% significant — all false positives"),
+         col = orange, cex = 1.05, font = 2, adj = 0.5)
+  })
+
   output$t8_verdict <- renderUI({
     d <- t8_data(); chg <- d$post - d$pre; ti_p <- t.test(chg ~ d$high)$p.value
     chh <- chg[d$high]; chl <- chg[!d$high]
     sp  <- sqrt(((length(chh)-1)*var(chh) + (length(chl)-1)*var(chl)) / (length(chg) - 2))
     dval <- round(abs(mean(chl) - mean(chh)) / sp, 2)
+    p_vals  <- t8_sims()
+    pct_sig <- round(100 * sum(p_vals < 0.05) / length(p_vals))
     HTML(paste0(
-      "The interaction p = <b>", signif(ti_p, 2),
-      if (ti_p < 0.05) "</b> is <b>significant" else "</b> is <b>not significant",
-      "</b>, with effect size d = <b>", dval, "</b>. ",
-      "This crossover is regression to the mean, manufactured by choosing the groups from the very data being tested."
+      "This single experiment: interaction p = <b>", signif(ti_p, 2),
+      if (ti_p < 0.05) "</b> (<b>significant" else "</b> (<b>not significant",
+      "</b>), effect size d = <b>", dval, "</b>. ",
+      "Across 1000 simulated experiments with these same settings, <b>", pct_sig,
+      "%</b> produced a significant interaction — yet there is no real effect in any of them. ",
+      "Every significant result is a false positive, manufactured by splitting groups ",
+      "using the same noisy baseline data that is then being analysed."
     ))
   })
 
