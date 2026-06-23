@@ -606,15 +606,18 @@ ui <- fluidPage(
               "dataset and the chance of at least one false 'hit' climbs quickly. ",
               "The curve shows how that chance grows, with and without correction; ",
               "each square is a test on pure noise, and orange squares are false positives."),
-            sliderInput("t11_m",   "Number of tests:", value = 20, min = 1, max = 100),
+            sliderInput("t11_m",     "Number of tests:", value = 20, min = 1, max = 100),
+            selectInput("t11_alpha", "Significance threshold (α):",
+                        choices = c("0.001", "0.01", "0.05", "0.1"),
+                        selected = "0.05"),
             actionButton("t11_new", "Resample")
           )
         ),
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t11_curve",   height = "440px")),
-            column(6, plotOutput("t11_squares", height = "440px"))
+            column(6, plotOutput("t11_squares", height = "440px")),
+            column(6, plotOutput("t11_curve",   height = "440px"))
           ),
           wellPanel(div(uiOutput("t11_verdict"), align = "justify"))
         )
@@ -676,10 +679,8 @@ ui <- fluidPage(
               "carry some noise - body mass, temperature, enzyme activity, heart rate. ",
               "When X is measured with error, OLS systematically ",
               strong("underestimates"), " the true slope, pulling it toward zero. ",
+              "The more noise in X, the more the slope shrinks.",
               "This is called ", strong("attenuation bias"), " or regression dilution."),
-            p("The more noise in X, the more the slope shrinks. This means a study ",
-              "reporting a 'weak' relationship may actually be measuring a strong one ",
-              "through a noisy instrument."),
             hr(),
             sliderInput("t13_n",      "Sample size:",
                         value = 80, min = 20, max = 300, step = 10),
@@ -705,6 +706,7 @@ ui <- fluidPage(
             column(6, plotOutput("t13_scatter", height = "380px")),
             column(6, plotOutput("t13_slopes",  height = "380px"))
           ),
+          br(),
           wellPanel(div(uiOutput("t13_verdict"), align = "justify"))
         )
       )
@@ -1443,29 +1445,46 @@ server <- function(input, output, session) {
     lines(k_seq, poc * 100, type = "b", pch = 17, lwd = 2, lty = 2, col = teal)
     abline(h = 5, col = blue, lwd = 2, lty = 2)
     abline(h = d$fp_fixed * 100, col = "gray50", lwd = 1.5, lty = 3)
-    legend("topleft", bty = "n", cex = 0.95, inset = c(0.02, 0.04),
+    legend("topleft", bty = "n", cex = 0.95, inset = c(0.02, 0.02),
            lty = c(1,2,2,3), lwd = c(2.5,2,2,1.5), pch = c(19,17,NA,NA),
            col = c(orange, teal, blue, "gray50"),
            legend = c("Simulated FPR (this run)", "Pocock (1977) approximation",
                       "5% nominal target", "Fixed sample (no peeking)"))
     usr <- par("usr")
-    text(usr[1] + (usr[2]-usr[1])*0.55, usr[4]*0.88,
-         paste0("Each interim test uses \u03b1 = 0.05.\nNo closed-form exists for the true FPR;\nPocock (1977) values are from\nnumerical integration."),
-         adj = c(0,1), cex = 0.82, col = "gray35")
+ 
   })
   output$t9_verdict <- renderUI({
     d <- t9_sim()
+    k        <- d$peeks
+    upper    <- round((1 - (1 - 0.05)^k) * 100, 1)
+    pocock_k   <- c(1,2,3,4,5,6,7,8,9,10)
+    pocock_fpr <- c(0.050,0.083,0.107,0.126,0.142,0.156,0.167,0.177,0.186,0.193)
+    poc      <- if (k <= 10) round(pocock_fpr[k] * 100, 1) else NA
+    poc_txt  <- if (!is.na(poc)) paste0("<b>", poc, "%</b> (Pocock)") else "see Pocock (1977)"
     HTML(paste0(
       "With <b>no peeking</b> (single test at the end), the false positive rate is <b>",
       round(d$fp_fixed * 100, 1), "%</b> - close to the expected 5%. ",
-      "With <b>", d$peeks, " peek(s)</b> of ", d$batch, " participants each, ",
+      "With <b>", k, " peek(s)</b> of ", d$batch, " participants each, ",
       "stopping whenever p < 0.05, the false positive rate rises to <b>",
       round(d$fp_peeking * 100, 1), "%</b>. ",
       "There is no real effect here - every significant result is a false alarm. ",
+      "<br><br>",
+      "The peeks are not independent - each one reuses all previous data - so the inflation ",
+      "is less than a simple multiplication would predict, but still substantial. ",
+      "For <b>", k, "</b> peek(s) at \u03b1 = 0.05, the true false positive rate is bounded by:",
+      "<br><br>",
+      "<div style='text-align:center; font-size:1.1em; margin: 6px 0;'>",
+      "5% &nbsp;&lt;&nbsp; FPR &nbsp;&le;&nbsp; ", upper, "% &nbsp;&nbsp; (actual: ", poc_txt, ")",
+      "</div>",
+      "<br>",
+      "The lower bound (5%) assumes no inflation at all. The upper bound (",
+      upper, "%) assumes each peek were a completely fresh, independent experiment - ",
+      "which overstates the problem because the tests share data. ",
+      "The Pocock value sits between them because it correctly accounts for the dependence. ",
       "Pre-registration of your stopping rule before data collection is the cleanest protection. ",
-      "There is no simple formula for how much peeking inflates the false positive rate - it depends ",
-      "on timing and sample size - but Pocock (1977) showed that even 5 equally-spaced interim looks ",
-      "pushes the true rate from 5% to roughly 14%, using the same p < 0.05 threshold throughout."
+      "<br><br><b>Reference</b><br>",
+      "Pocock, SJ. 1977. Group sequential methods in the design and analysis of clinical trials. ",
+      "<i>Biometrika</i>, 64: 191\u2013199."
     ))
   })
 
@@ -1535,16 +1554,18 @@ server <- function(input, output, session) {
   t11_p <- reactive({ set.seed(80 + input$t11_new); runif(input$t11_m) })
   output$t11_squares <- renderPlot({
     p <- t11_p(); m <- length(p); g <- ceiling(sqrt(m))
+    alpha <- as.numeric(input$t11_alpha)
     xs <- ((seq_len(m)-1) %% g)+1; ys <- g-((seq_len(m)-1) %/% g)
     par(mar=c(1,1,3,1))
     plot(NULL, xlim=c(0.5,g+0.5), ylim=c(0.5,g+0.5),
          xaxt="n", yaxt="n", xlab="", ylab="",
-         main=paste0(m," tests on pure noise"), cex.main=1.4, bty="n", asp=1)
+         main=paste0(m," tests on pure noise  (α = ", alpha, ")"),
+         cex.main=1.4, bty="n", asp=1)
     symbols(xs, ys, squares=rep(0.9,m), inches=FALSE, add=TRUE,
-            bg=ifelse(p<0.05,orange,"gray85"), fg="white")
+            bg=ifelse(p<alpha, orange, "gray85"), fg="white")
   })
   output$t11_curve <- renderPlot({
-    m <- input$t11_m; alpha <- 0.05; nn <- 1:100
+    m <- input$t11_m; alpha <- as.numeric(input$t11_alpha); nn <- 1:100
     fwer <- 1-(1-alpha)^nn; bonf <- 1-(1-alpha/nn)^nn
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(nn, fwer, type="l", lwd=3, col=orange, ylim=c(0,1.05),
@@ -1552,19 +1573,26 @@ server <- function(input, output, session) {
          main="Why correction matters", bty="l")
     lines(nn, bonf, lwd=3, col=teal)
     abline(h=alpha, col="gray60", lty=2)
+    text(102, alpha, paste0("α = ", alpha), col="gray40", cex=0.9, adj=0, xpd=TRUE)
     points(m, 1-(1-alpha)^m,   pch=19, col=orange, cex=1.8)
     points(m, 1-(1-alpha/m)^m, pch=19, col=teal,   cex=1.8)
     abline(v=m, col="gray80", lty=3)
     text(2, 1.02, expression(P(at~least~one~FP)==1-(1-alpha)^n), col=orange, cex=1.0, adj=0)
-    legend("right", bty="n", cex=1.0, lwd=3, col=c(orange,teal),
+    legend(x=50, y=0.75, bty="n", cex=1.0, lwd=3, col=c(orange,teal),
            legend=c("No correction","Bonferroni correction"))
   })
   output$t11_verdict <- renderUI({
-    m <- input$t11_m; fwer <- 1-(0.95)^m; bonf <- 0.05/m; fwer_c <- 1-(1-bonf)^m
-    HTML(paste0("With <b>",m,"</b> independent tests on pure noise, the chance of at least one false positive is about <b>",
-                round(100*fwer),"%</b>. The Bonferroni correction divides 0.05 among the tests - each must clear <b>",
-                signif(bonf,2)," (= 0.05 / ",m,")</b> - holding the family-wise false-positive rate at about <b>",
-                round(100*fwer_c),"%</b>."))
+    m <- input$t11_m; alpha <- as.numeric(input$t11_alpha)
+    fwer  <- 1-(1-alpha)^m
+    bonf  <- alpha/m
+    fwer_c <- 1-(1-bonf)^m
+    HTML(paste0(
+      "With α = <b>", alpha, "</b> and <b>", m, "</b> independent tests on pure noise, ",
+      "the chance of at least one false positive is about <b>", round(100*fwer, 1), "%</b>. ",
+      "The Bonferroni correction sets each test's threshold to <b>",
+      signif(bonf, 2), " (= ", alpha, " / ", m, ")</b>, ",
+      "holding the family-wise false-positive rate at about <b>", round(100*fwer_c, 1), "%</b>."
+    ))
   })
 
   # ===== 12. OVERFITTING ====================================================
@@ -1796,6 +1824,13 @@ server <- function(input, output, session) {
     points(jitter(rep(1,length(d$C)),amount=0.08), d$C, col="gray80", pch=19, cex=0.8)
     points(jitter(rep(2,length(d$D)),amount=0.08), d$D, col="gray80", pch=19, cex=0.8)
     draw_ci(1,sC,teal); draw_ci(2,sD,orange)
+    # "not directly compared" bracket spanning C to D
+    bk_y  <- par("usr")[4] * 0.92        # bracket height: 92% of the way up
+    bk_dy <- diff(par("usr")[3:4]) * 0.03 # small tick drop at each end
+    lines(c(1, 1, 2, 2), c(bk_y-bk_dy, bk_y, bk_y, bk_y-bk_dy),
+          col="gray40", lwd=1.5)
+    text(1.5, bk_y + diff(par("usr")[3:4])*0.02,
+         "Direct Comparison - Correct Way", col="gray40", cex=1, font=3)
   })
   output$t15_sim <- renderPlot({
     r <- t15_rates(); pct <- round(100*r)
