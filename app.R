@@ -2181,7 +2181,7 @@ server <- function(input, output, session) {
     yr   <- range(c(d$C, d$D))
     ypad <- diff(yr) * 0.35
     #yl   <- c(yr[1] - ypad, yr[2] + 0.5) no longer used
-    yl   <-c(-4, 4)
+    yl   <-c(-2, 3)
 
     par(mar=c(4.5, 4.5, 3, 1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(NULL, xlim=c(0.5, 2.5), ylim=yl, xaxt="n", xlab="",
@@ -2189,8 +2189,8 @@ server <- function(input, output, session) {
          main="Each group tested against zero, then against each other", bty="l")
     axis(1, at=c(1,2), labels=c("Group C","Group D"), cex.axis=1.2)
     abline(h=0, col="gray70", lty=2)
-    points(jitter(rep(1,length(d$C)),amount=0.08), d$C, col="gray80", pch=19, cex=0.8)
-    points(jitter(rep(2,length(d$D)),amount=0.08), d$D, col="gray80", pch=19, cex=0.8)
+    points(jitter(rep(1,length(d$C)),amount=0.08), d$C, col="gray80", pch=19, cex=0.5)
+    points(jitter(rep(2,length(d$D)),amount=0.08), d$D, col="gray80", pch=19, cex=0.5)
     draw_ci(1, sC, teal); draw_ci(2, sD, orange)
 
     # ── Correct way bracket (top of plot, spanning C to D) ──────────────────
