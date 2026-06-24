@@ -55,7 +55,27 @@ ui <- fluidPage(
   tags$head(tags$style(HTML(
     ".action-button { color:#fff; background-color:#569BBD; border:none; }
      .action-button:hover { color:#fff; background-color:#3E7C99; }
-     .action-button:active { transform:scale(0.97); }"
+     .action-button:active { transform:scale(0.97); }
+
+     /* Active tab: teal text, bold, top border highlight */
+     .nav-tabs > li.active > a,
+     .nav-tabs > li.active > a:hover,
+     .nav-tabs > li.active > a:focus {
+       color: #009499 !important;
+      font-size: 12px; font-weight: bold;
+      background-color: #f0fafa !important;
+     }
+
+     /* Inactive tabs: muted, compact */
+     .nav-tabs > li > a {
+       color: #666;
+       font-size: 12px;
+       padding: 5px 9px;
+     }
+     .nav-tabs > li > a:hover {
+       color: #009499;
+       background-color: #f0fafa;
+     }"
   ))),
 
   tabsetPanel(
@@ -476,16 +496,11 @@ ui <- fluidPage(
               strong("overestimate"), " its true size - not through dishonesty, but ",
               "simply because smaller estimates of the same real effect would not have ",
               "been deemed significant enough to publish."),
-            p("This is called the ", strong("winner's curse"),
-              " (borrowing a term from auction theory). It explains why initial ",
-              "exciting findings in genetics, psychology, and medicine so often shrink ",
-              "or disappear in follow-up studies. The original study was not necessarily ",
-              "wrong - it was just selected from a distribution of possible outcomes ",
-              "by virtue of being large enough to publish."),
             p("The left plot shows the full distribution of observed effect sizes. ",
               "The right plot shows what gets published (those clearing the significance ",
               "bar) vs. the true effect. Watch what happens as sample size grows or ",
               "the true effect shrinks."),
+            hr(),
             sliderInput("t7_true_eff", "True effect size (Cohen's d):",
                         value = 0.3, min = 0, max = 1.0, step = 0.05),
             sliderInput("t7_n",        "Sample size per study:",
@@ -493,7 +508,7 @@ ui <- fluidPage(
             sliderInput("t7_sims",     "Number of simulated studies:",
                         value = 2000, min = 500, max = 10000, step = 500),
             actionButton("t7_new", "Resample")
-          )
+            )
         ),
         column(
           width = 8,
@@ -1079,8 +1094,8 @@ server <- function(input, output, session) {
     rug(rs, col = adjustcolor(teal,   0.8), lwd = 1.5, ticksize = 0.04)
     rug(bs, col = adjustcolor(orange, 0.8), lwd = 1.5, ticksize = -0.04)
 
-    # Vertical lines capped at 50% of y-axis height for readability
-    half_y <- ylim[2] * 0.5
+    # Vertical lines capped at 70% of y-axis height for readability
+    half_y <- ylim[2] * 0.7
     segments(true_mn, 0, true_mn, half_y, lty = 2, col = "gray30", lwd = 2)
     segments(rand_mn, 0, rand_mn, half_y, lty = 1, col = teal,     lwd = 2)
     segments(bias_mn, 0, bias_mn, half_y, lty = 1, col = orange,   lwd = 2)
@@ -1121,8 +1136,8 @@ server <- function(input, output, session) {
          las = 1, bty = "l")
     plot(h_bias, col = adjustcolor(orange, 0.5), border = "white", add = TRUE)
 
-    # True mean reference line capped at 50% height
-    segments(true_mn, 0, true_mn, ylim[2] * 0.5, lty = 2, col = "gray30", lwd = 2)
+    # True mean reference line capped at 70% height
+    segments(true_mn, 0, true_mn, ylim[2] * 0.7, lty = 2, col = "gray30", lwd = 2)
 
     rand_bias <- round(mean(rs_means) - true_mn, 1)
     bias_bias <- round(mean(bs_means) - true_mn, 1)
@@ -1538,11 +1553,18 @@ server <- function(input, output, session) {
   output$t7_all <- renderPlot({
     s <- t7_sim()
     all_d <- s$obs_d; sig <- s$sig
-    brks  <- seq(min(all_d) - 0.01, max(all_d) + 0.01, length.out = 40)
+    # Fix x-axis to true effect ± 4 SE of d, stable across resamples but responsive to sliders
+    se_d  <- sqrt(2 / input$t7_n)     # standard error of Cohen's d
+    xlo   <- input$t7_true_eff - 5 * se_d
+    xhi   <- input$t7_true_eff + 5 * se_d
+    brks  <- seq(xlo - 0.1, xhi + 0.1, length.out = 40)
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
+    bw    <- diff(brks[1:2])                          # bin width
+    peak  <- dnorm(0, 0, se_d) * input$t7_sims * bw  # expected count at peak
+    ylim  <- c(0, peak * 1.15)                        # 15% headroom for legend
     hist(all_d, breaks = brks, col = adjustcolor("gray70", 0.6), border = "white",
          xlab = "Observed effect size (d)", ylab = "Frequency",
-         main = "All studies", freq = TRUE)
+         main = "All studies", freq = TRUE, xlim = c(xlo, xhi), ylim = ylim)
     hist(all_d[sig], breaks = brks, col = adjustcolor(orange, 0.75), border = "white", add = TRUE)
     abline(v = s$true_d, col = blue, lwd = 2.5, lty = 2)
     legend("topright", bty = "n", cex = 0.95,
@@ -1587,12 +1609,18 @@ server <- function(input, output, session) {
       "%</b> reached significance (study power). ",
       "The mean effect size among those that did reach significance was <b>d = ",
       round(mean(pub), 2), "</b> - an overestimate of <b>", inflation, "%</b>. ",
-      "This is the winner's curse: significance acts as a filter that selects for ",
-      "unusually large observed effects. The first published study on a topic is almost ",
+      "Significance acts as a filter that selects for unusually large obvserved effects. ",
+      "The first published study on a topic is almost ",
       "always drawn from the right tail of the distribution, making it look more ",
       "impressive than follow-up studies will confirm. ",
       "Increase the sample size to raise power - watch the inflation shrink as the ",
-      "filter becomes less selective."
+      "filter becomes less selective.",
+      "<br><br>This effect is called the ", strong("winner's curse "),
+      " (borrowing a term from auction theory). It explains why initial ",
+      "exciting findings in genetics, psychology, and medicine so often shrink ",
+      "or disappear in follow-up studies. The original study was not necessarily ",
+      "wrong - it was just selected from a distribution of possible outcomes ",
+      "by virtue of being large enough to publish."
     ))
   })
 
