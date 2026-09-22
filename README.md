@@ -8,67 +8,74 @@ This app turns common statistical mistakes, mishaps, and misconceptions in
 published research into hands-on simulations. Each mistake gets its own tab
 with sliders, a **Resample** button, and a plain-language verdict that updates
 as you experiment. The original ten mistakes are drawn from a widely cited
-review (Makin & Orban de Xivry, 2019, *eLife*); nine further topics have been
-added from the statistical education literature.
+review (Makin & Orban de Xivry, 2019, *eLife*); eleven further topics have
+been added from the statistical education literature.
 
 ## The mistakes
 
 ### Sampling & selection problems
 
-1. **Survivorship bias** — we only see the cases that survived a hidden filter;
+1. **Biased sampling** — non-random sampling produces a systematically biased
+   estimate that more data cannot fix, no matter how large the sample grows
+2. **Survivorship bias** — we only see the cases that survived a hidden filter;
    the missing data are often the most important
-2. **Filtering bias** — studying only the top performers can reverse or erase
+3. **Filtering bias** — studying only the top performers can reverse or erase
    a true correlation (Berkson's paradox)
-3. **Base rate neglect** — even a highly accurate test gives mostly false
+4. **Base rate neglect** — even a highly accurate test gives mostly false
    positives when the condition is rare (positive predictive value vs. accuracy)
-4. **Small samples** — small studies can only detect large effects, so any
+5. **Small samples** — small studies can only detect large effects, so any
    result that reaches significance looks implausibly large
-5. **Regression to the mean** — extreme scorers move back toward average on
+6. **Regression to the mean** — extreme scorers move back toward average on
    retesting with no real change; natural drift is mistaken for an effect
-6. **Winner's curse** — the first study to report an effect almost always
+7. **Winner's curse** — the first study to report an effect almost always
    overestimates its size because only the largest observed effects clear the
    significance threshold
 
 ### Analysis & modelling errors
 
-7. **Pseudoreplication** — counting repeated measurements from the same subject
+8. **Pseudoreplication** — counting repeated measurements from the same subject
    as independent observations inflates degrees of freedom and lowers the bar
    for significance
-8. **Circular analysis** — splitting data by the very result you are testing
+9. **Circular analysis** — splitting data by the very result you are testing
    manufactures a fake interaction through regression to the mean
-9. **Garden of forking paths** — optional stopping (peeking at results and
-   stopping when p < 0.05) inflates the false positive rate even when every
-   individual decision seems reasonable
-10. **p-hacking** — trying many analyses until one crosses p < 0.05; each
+10. **Garden of forking paths** — optional stopping (peeking at results and
+    stopping when p < 0.05) inflates the false positive rate even when every
+    individual decision seems reasonable
+11. **p-hacking** — trying many analyses until one crosses p < 0.05; each
     defensible choice compounds the false positive risk
-11. **Multiple comparisons** — run enough tests and false positives are
+12. **Multiple comparisons** — run enough tests and false positives are
     inevitable; Bonferroni correction keeps the family-wise error rate in check
-12. **Overfitting** — a model complex enough to trace every wiggle in training
+13. **Overfitting** — a model complex enough to trace every wiggle in training
     data memorises noise and predicts new data poorly
-13. **Measurement error / attenuation bias** — noise in the predictor variable
+14. **Measurement error / attenuation bias** — noise in the predictor variable
     shrinks the OLS slope toward zero; Model II (RMA) regression corrects for
     error in both variables
 
 ### Interpretation errors
 
-14. **Missing a control group** — mistaking a natural change over time for a
+15. **Missing a control group** — mistaking a natural change over time for a
     real treatment effect
-15. **Comparing significance** — "significant here, not there" is not a real
+16. **Comparing significance** — "significant here, not there" is not a real
     difference; a difference in significance is not a significant difference
     (Nieuwenhuis et al., 2011)
-16. **Non-significant results** — absence of evidence is not evidence of
+17. **Non-significant results** — absence of evidence is not evidence of
     absence; a wide confidence interval means the study could not tell, not
     that there is no effect
-17. **Spurious correlations** — a single outlier or two pooled subgroups can
+18. **P-value ≠ effect size** — a smaller p-value does not mean a bigger or
+    more trustworthy effect. Under a true null, p-values are spread uniformly
+    between 0 and 1; and the effect size needed to reach p = 0.05 depends
+    entirely on sample size, so the same p-value can reflect a tiny effect in
+    a large study or a huge effect in a small one
+19. **Spurious correlations** — a single outlier or two pooled subgroups can
     manufacture a correlation where none exists
-18. **Ecological fallacy** — a correlation observed at the group level need not
+20. **Ecological fallacy** — a correlation observed at the group level need not
     hold at the individual level; the extreme case is Simpson's paradox
-19. **Correlation vs. causation** — a hidden common cause (confounder) can
+21. **Correlation vs. causation** — a hidden common cause (confounder) can
     produce a strong correlation between two otherwise unrelated variables
 
 ## How to use
 
-Open the **Overview** tab first for a summary of all nineteen mistakes,
+Open the **Overview** tab first for a summary of all twenty-one mistakes,
 organised by category. Then step through the numbered tabs in any order.
 In each tab:
 
@@ -81,7 +88,7 @@ In each tab:
 ## Setup notes
 
 - Place `bomber.png` (WWII bomber damage diagram) in a `www/` subfolder next
-  to `app.R`. The app runs without it but Tab 1 will show a missing image.
+  to `app.R`. The app runs without it but Tab 2 will show a missing image.
 - No packages beyond `shiny` are required — all plots use base R graphics.
 
 ## Learning goals

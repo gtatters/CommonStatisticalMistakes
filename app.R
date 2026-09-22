@@ -51,7 +51,7 @@ r_pval <- function(r, n) {
 ui <- fluidPage(
   titlePanel("Common Mistakes, Mishaps, and Misconceptions in Science",
              windowTitle = "Statistical Mistakes"),
-
+  
   tags$head(tags$style(HTML(
     ".action-button { color:#fff; background-color:#569BBD; border:none; }
      .action-button:hover { color:#fff; background-color:#3E7C99; }
@@ -77,10 +77,10 @@ ui <- fluidPage(
        background-color: #f0fafa;
      }"
   ))),
-
+  
   tabsetPanel(
     type = "tabs",
-
+    
     # ======= OVERVIEW =======================================================
     tabPanel(
       "Overview",
@@ -89,7 +89,7 @@ ui <- fluidPage(
           width = 8,
           h2("Common mistakes, mishaps, and misconceptions",
              style = paste0("color:", teal, "; font-weight:700;")),
-        
+          
           p(style = "font-size:17px; line-height:1.6;",
             "Most errors in published research are not failures of advanced mathematics. ",
             "They are everyday mistakes of design, sampling, and interpretation that are ",
@@ -146,6 +146,8 @@ ui <- fluidPage(
                     " 'significant here, not there' is not a real difference."),
             tags$li(strong("Non-significant results:"),
                     " absence of evidence is not evidence of absence."),
+            tags$li(strong("P-value \u2260 effect size:"),
+                    " a smaller p-value does not mean a bigger or more trustworthy effect."),
             tags$li(strong("Spurious correlations:"),
                     " one outlier or two subgroups can manufacture a correlation."),
             tags$li(strong("Ecological fallacy:"),
@@ -182,7 +184,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 1. BIASED SAMPLING ==============================================
     tabPanel(
       "1. Biased Sampling",
@@ -236,7 +238,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 2. SURVIVORSHIP BIAS ===========================================
     tabPanel(
       "2. Survivorship Bias",
@@ -301,7 +303,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 3. FILTERING BIAS ==============================================
     tabPanel(
       "3. Filtering Bias",
@@ -322,7 +324,7 @@ ui <- fluidPage(
               "trade-off, simply because the filtering process made them look that way."),
             p("This is sometimes called ", strong("Berkson's paradox"), " or ",
               strong("selection bias.")),
-
+            
             sliderInput("t3_n",   "Population size:",
                         value = 800, min = 200, max = 5000, step = 100),
             sliderInput("t3_pct", "Selection threshold (top X%):",
@@ -362,7 +364,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 4. BASE RATE NEGLECT ===========================================
     tabPanel(
       "4. Base Rate",
@@ -405,7 +407,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 5. SMALL SAMPLES ===============================================
     tabPanel(
       "5. Small n",
@@ -437,7 +439,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 6. REGRESSION TO THE MEAN =====================================
     tabPanel(
       "6. Regression to Mean",
@@ -480,7 +482,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 7. WINNER'S CURSE ==============================================
     tabPanel(
       "7. Winner's Curse",
@@ -508,7 +510,7 @@ ui <- fluidPage(
             sliderInput("t7_sims",     "Number of simulated studies:",
                         value = 2000, min = 500, max = 10000, step = 500),
             actionButton("t7_new", "Resample")
-            )
+          )
         ),
         column(
           width = 8,
@@ -520,7 +522,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 8. PSEUDOREPLICATION ===========================================
     tabPanel(
       "8. Pseudoreplicate",
@@ -557,7 +559,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 9. CIRCULAR ANALYSIS ===========================================
     tabPanel(
       "9. Circular",
@@ -591,7 +593,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 10. GARDEN OF FORKING PATHS =====================================
     tabPanel(
       "10. Forking Paths",
@@ -630,7 +632,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 11. P-HACKING ==================================================
     tabPanel(
       "11. p-Hacking",
@@ -661,7 +663,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 12. MULTIPLE COMPARISONS =======================================
     tabPanel(
       "12. Multiplicity",
@@ -692,7 +694,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 13. OVERFITTING ================================================
     tabPanel(
       "13. Overfitting",
@@ -733,7 +735,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 14. MEASUREMENT ERROR ==========================================
     tabPanel(
       "14. Measurement Error",
@@ -780,7 +782,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 15. MISSING CONTROL GROUP ======================================
     tabPanel(
       "15. Missing Controls",
@@ -809,7 +811,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 16. COMPARING SIGNIFICANCE =====================================
     tabPanel(
       "16. Comparing Significance",
@@ -843,7 +845,7 @@ ui <- fluidPage(
         )
       )
     ),
-
+    
     # ======= 17. NON-SIGNIFICANT RESULTS ====================================
     tabPanel(
       "17. Non-Significant ≠ No Effect",
@@ -872,10 +874,62 @@ ui <- fluidPage(
         )
       )
     ),
-
-    # ======= 18. SPURIOUS CORRELATIONS ======================================
+    
+    # ======= 18. P-VALUE != EFFECT SIZE =====================================
     tabPanel(
-      "18. Spurious Correlation",
+      "18. P-Value \u2260 Effect Size",
+      br(),
+      fluidRow(
+        column(
+          width = 4,
+          wellPanel(
+            p(strong("The mistake")),
+            p("Some people read a smaller p-value as proof of a bigger, more ",
+              "trustworthy effect: \"my p was really small, so I'm confident in my ",
+              "result.\" But a p-value does not measure the size of an effect at all. ",
+              "If the null hypothesis is exactly ", strong("true"), " - no real effect - ",
+              "the p-value from a single study is equally likely to land anywhere ",
+              "between 0 and 1. A p of 0.001 is not \"more significant\" than a p of ",
+              "0.049; under a true null, both are just as likely to occur by chance."),
+            p(style = "font-size:14px;",
+              "Effect size here is measured with ", strong("Cohen's d"),
+              ": the difference between the two group means, divided by their ",
+              "pooled standard deviation. As a rough guide, d \u2248 0.2 is a small effect, ",
+              "0.5 medium, and 0.8 or more, large - and this ",
+              "does not depend on sample size. A p-value, by contrast, mixes effect ",
+              "size together with sample size and chance, so the same d can produce ",
+              "very different p-values from study to study."),
+            hr(),
+            sliderInput("t18_meandiff", "True mean difference between groups:",
+                        value = 0, min = -1, max = 1, step = 0.05),
+            sliderInput("t18_n", "Sample size per group:",
+                        value = 20, min = 5, max = 100, step = 5),
+            sliderInput("t18_reps", "Number of replications:",
+                        value = 200, min = 50, max = 1000, step = 50),
+            actionButton("t18_new", "Resample")
+          )
+        ),
+        column(
+          width = 8,
+          fluidRow(
+            column(6, plotOutput("t18_curve", height = "380px")),
+            column(6, plotOutput("t18_hist",  height = "380px"))
+          ),
+          p(style = "font-size:12.5px; color:#777; margin:6px 2px 0;",
+            "The dots on the left are this run's actual simulated results, plotted ",
+            "against Cohen's d. They land exactly on the curve because p is fully ",
+            "determined by d once you know the sample size - no extra randomness at ",
+            "that step. The histogram on the right is those same dots' p-values, ",
+            "with the d-axis dropped."),
+          br(),
+          wellPanel(div(uiOutput("t18_verdict"), align = "justify"))
+        )
+      )
+    ),
+    
+    # ======= 19. SPURIOUS CORRELATIONS ======================================
+    tabPanel(
+      "19. Spurious Correlation",
       br(),
       fluidRow(
         column(
@@ -884,24 +938,24 @@ ui <- fluidPage(
             p(strong("The mistake")),
             p("A correlation looks real but is created by a single far-away point, ",
               "or by two clusters that have been pooled together."),
-            radioButtons("t18_type", "Cause of the spurious correlation:",
+            radioButtons("t19_type", "Cause of the spurious correlation:",
                          c("A single outlier" = "outlier",
                            "Two subgroups"     = "subgroup")),
-            uiOutput("t18_slider"),
-            actionButton("t18_new", "Resample")
+            uiOutput("t19_slider"),
+            actionButton("t19_new", "Resample")
           )
         ),
         column(
           width = 8,
-          plotOutput("t18_plot", height = "440px"),
-          wellPanel(div(uiOutput("t18_verdict"), align = "justify"))
+          plotOutput("t19_plot", height = "440px"),
+          wellPanel(div(uiOutput("t19_verdict"), align = "justify"))
         )
       )
     ),
-
-    # ======= 19. ECOLOGICAL FALLACY =========================================
+    
+    # ======= 20. ECOLOGICAL FALLACY =========================================
     tabPanel(
-      "19. Ecological Fallacy",
+      "20. Ecological Fallacy",
       br(),
       fluidRow(
         column(
@@ -919,31 +973,31 @@ ui <- fluidPage(
               " - where the direction of a relationship ", em("reverses"),
               " when you move from groups to individuals. Increase the group ",
               "separation below to push toward a reversal."),
-            sliderInput("t19_groups",  "Number of groups:",
+            sliderInput("t20_groups",  "Number of groups:",
                         value = 4, min = 2, max = 10, step = 1),
-            sliderInput("t19_n",       "Individuals per group:",
+            sliderInput("t20_n",       "Individuals per group:",
                         value = 70, min = 10, max = 100, step = 10),
-            sliderInput("t19_between", "Between-group separation:",
+            sliderInput("t20_between", "Between-group separation:",
                         value = 4, min = 0, max = 5, step = 0.25),
-            sliderInput("t19_within",  "Within-group correlation (true individual r):",
+            sliderInput("t20_within",  "Within-group correlation (true individual r):",
                         value = 0.5, min = -0.8, max = 0.8, step = 0.1),
-            actionButton("t19_new",    "Resample")
+            actionButton("t20_new",    "Resample")
           )
         ),
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t19_grouped",    height = "380px")),
-            column(6, plotOutput("t19_individual", height = "380px"))
+            column(6, plotOutput("t20_grouped",    height = "380px")),
+            column(6, plotOutput("t20_individual", height = "380px"))
           ),
-          wellPanel(div(uiOutput("t19_verdict"), align = "justify"))
+          wellPanel(div(uiOutput("t20_verdict"), align = "justify"))
         )
       )
     ),
-
-    # ======= 20. CORRELATION VS CAUSATION ===================================
+    
+    # ======= 21. CORRELATION VS CAUSATION ===================================
     tabPanel(
-      "20. Correlation ≠ Causation",
+      "21. Correlation ≠ Causation",
       br(),
       fluidRow(
         column(
@@ -959,29 +1013,29 @@ ui <- fluidPage(
               "simply have both more chocolate and more research funding. National ",
               "wealth is the hidden common cause. (The data here are illustrative ",
               "and simulated, but the relationship is real.)"),
-            sliderInput("t20_str", "Strength of national wealth as a common cause:",
+            sliderInput("t21_str", "Strength of national wealth as a common cause:",
                         value = 0.7, min = 0, max = 0.95, step = 0.05),
-            checkboxInput("t20_ctrl", "Account for national wealth (GDP)", FALSE)
+            checkboxInput("t21_ctrl", "Account for national wealth (GDP)", FALSE)
           )
         ),
         column(
           width = 8,
-          plotOutput("t20_plot", height = "440px"),
-          wellPanel(div(uiOutput("t20_verdict"), align = "justify"))
+          plotOutput("t21_plot", height = "440px"),
+          wellPanel(div(uiOutput("t21_verdict"), align = "justify"))
         )
       )
     )
-
-
+    
+    
   )   # end tabsetPanel
 )   # end fluidPage
 
 
 # ============================== SERVER =======================================
 server <- function(input, output, session) {
-
+  
   # ===== 1. BIASED SAMPLING ===================================================
-
+  
   # True population: sizes normally distributed, mean=50, sd=10
   # Boldness correlated with size for volunteer method
   t1_pop <- reactive({
@@ -992,14 +1046,14 @@ server <- function(input, output, session) {
     bold <- input$t1_bold * scale(size)[,1] + sqrt(1 - input$t1_bold^2) * rnorm(n)
     list(size = size, bold = bold)
   })
-
+  
   # Draw one random sample (teal — always the reference)
   t1_rand_samp <- reactive({
     pop <- t1_pop()
     idx <- sample(length(pop$size), input$t1_n)
     pop$size[idx]
   })
-
+  
   # Draw one biased sample (orange — depends on method)
   t1_bias_samp <- reactive({
     pop    <- t1_pop()
@@ -1007,28 +1061,28 @@ server <- function(input, output, session) {
     bold   <- pop$bold
     n_samp <- input$t1_n
     method <- input$t1_method
-
+    
     idx <- switch(method,
-      random = sample(length(size), n_samp),
-      convenience = {
-        # Only fish below the 40th percentile of size (shore-accessible)
-        eligible <- which(size <= quantile(size, 0.40))
-        if (length(eligible) < n_samp) eligible else sample(eligible, n_samp)
-      },
-      threshold = {
-        eligible <- which(size >= input$t1_thresh)
-        if (length(eligible) < n_samp) eligible else sample(eligible, n_samp)
-      },
-      volunteer = {
-        # Probability of capture proportional to boldness (rescaled to 0-1)
-        prob <- bold - min(bold) + 0.05
-        prob <- prob / sum(prob)
-        sample(length(size), n_samp, prob = prob)
-      }
+                  random = sample(length(size), n_samp),
+                  convenience = {
+                    # Only fish below the 40th percentile of size (shore-accessible)
+                    eligible <- which(size <= quantile(size, 0.40))
+                    if (length(eligible) < n_samp) eligible else sample(eligible, n_samp)
+                  },
+                  threshold = {
+                    eligible <- which(size >= input$t1_thresh)
+                    if (length(eligible) < n_samp) eligible else sample(eligible, n_samp)
+                  },
+                  volunteer = {
+                    # Probability of capture proportional to boldness (rescaled to 0-1)
+                    prob <- bold - min(bold) + 0.05
+                    prob <- prob / sum(prob)
+                    sample(length(size), n_samp, prob = prob)
+                  }
     )
     size[idx]
   })
-
+  
   # 500 simulations for teal (random) — reruns only when n or pop changes
   t1_rand_sims <- reactive({
     pop    <- t1_pop()
@@ -1036,7 +1090,7 @@ server <- function(input, output, session) {
     n_samp <- input$t1_n
     replicate(500, mean(size[sample(length(size), n_samp)]))
   })
-
+  
   # 500 simulations for orange (biased) — reruns when method or bias sliders change
   t1_bias_sims <- reactive({
     pop    <- t1_pop()
@@ -1046,29 +1100,29 @@ server <- function(input, output, session) {
     method <- input$t1_method
     thresh <- input$t1_thresh
     bstr   <- input$t1_bold
-
+    
     replicate(500, {
       idx <- switch(method,
-        random = sample(length(size), n_samp),
-        convenience = {
-          elig <- which(size <= quantile(size, 0.40))
-          if (length(elig) < n_samp) elig else sample(elig, n_samp)
-        },
-        threshold = {
-          elig <- which(size >= thresh)
-          if (length(elig) < n_samp) elig else sample(elig, n_samp)
-        },
-        volunteer = {
-          b    <- bstr * scale(size)[,1] + sqrt(1 - bstr^2) * rnorm(length(size))
-          prob <- b - min(b) + 0.05
-          prob <- prob / sum(prob)
-          sample(length(size), n_samp, prob = prob)
-        }
+                    random = sample(length(size), n_samp),
+                    convenience = {
+                      elig <- which(size <= quantile(size, 0.40))
+                      if (length(elig) < n_samp) elig else sample(elig, n_samp)
+                    },
+                    threshold = {
+                      elig <- which(size >= thresh)
+                      if (length(elig) < n_samp) elig else sample(elig, n_samp)
+                    },
+                    volunteer = {
+                      b    <- bstr * scale(size)[,1] + sqrt(1 - bstr^2) * rnorm(length(size))
+                      prob <- b - min(b) + 0.05
+                      prob <- prob / sum(prob)
+                      sample(length(size), n_samp, prob = prob)
+                    }
       )
       mean(size[idx])
     })
   })
-
+  
   output$t1_pop <- renderPlot({
     pop      <- t1_pop()
     rs       <- t1_rand_samp()
@@ -1080,7 +1134,7 @@ server <- function(input, output, session) {
     brks  <- seq(min(floor(min(pop$size)) - 3, 10),
                  max(ceiling(max(pop$size)) + 3, 90),
                  by = 3)
-
+    
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.1)
     h <- hist(pop$size, breaks = brks, plot = FALSE)
     ylim <- c(0, max(h$counts) * 1.20)
@@ -1089,17 +1143,17 @@ server <- function(input, output, session) {
          xlab = "Body size (cm)", ylab = "Count",
          main = "Lake population and your two samples",
          las = 1, bty = "l")
-
+    
     # Teal rug above axis = random sample; orange rug below = biased sample
     rug(rs, col = adjustcolor(teal,   0.8), lwd = 1.5, ticksize = 0.04)
     rug(bs, col = adjustcolor(orange, 0.8), lwd = 1.5, ticksize = -0.04)
-
+    
     # Vertical lines capped at 70% of y-axis height for readability
     half_y <- ylim[2] * 0.7
     segments(true_mn, 0, true_mn, half_y, lty = 2, col = "gray30", lwd = 2)
     segments(rand_mn, 0, rand_mn, half_y, lty = 1, col = teal,     lwd = 2)
     segments(bias_mn, 0, bias_mn, half_y, lty = 1, col = orange,   lwd = 2)
-
+    
     legend("topleft", bty = "n", cex = 0.95,
            lty = c(2, 1, 1),
            lwd = c(2, 2, 2),
@@ -1110,23 +1164,23 @@ server <- function(input, output, session) {
              paste0("Biased mean: ",  round(bias_mn, 1), " cm")
            ))
   })
-
+  
   output$t1_sim <- renderPlot({
     rs_means <- t1_rand_sims()
     bs_means <- t1_bias_sims()
     true_mn  <- mean(t1_pop()$size)
-
+    
     # x-axis expands if biased means fall far from population centre (e.g. high threshold)
     # but keeps at least true_mn ± 15 cm wide for stability across resamples
     all_means <- c(rs_means, bs_means)
     xlim <- c(min(floor(min(all_means)) - 1, true_mn - 15),
               max(ceiling(max(all_means)) + 1, true_mn + 15))
     brks <- seq(xlim[1] - 1, xlim[2] + 1, by = 0.5)
-
+    
     h_rand <- hist(rs_means, breaks = brks, plot = FALSE)
     h_bias <- hist(bs_means, breaks = brks, plot = FALSE)
     ylim   <- c(0, max(h_rand$counts, h_bias$counts) * 1.20)
-
+    
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.1)
     # Teal = random sampling distribution; orange = biased sampling distribution
     plot(h_rand, col = adjustcolor(teal, 0.5), border = "white",
@@ -1135,13 +1189,13 @@ server <- function(input, output, session) {
          main = "500 simulated studies: where do estimates land?",
          las = 1, bty = "l")
     plot(h_bias, col = adjustcolor(orange, 0.5), border = "white", add = TRUE)
-
+    
     # True mean reference line capped at 70% height
     segments(true_mn, 0, true_mn, ylim[2] * 0.7, lty = 2, col = "gray30", lwd = 2)
-
+    
     rand_bias <- round(mean(rs_means) - true_mn, 1)
     bias_bias <- round(mean(bs_means) - true_mn, 1)
-
+    
     # Legend combines fill swatches (histograms) with dashed line (true mean)
     legend("topleft", bty = "n", cex = 0.95,
            fill   = c(adjustcolor(teal, 0.6), adjustcolor(orange, 0.6), NA),
@@ -1155,7 +1209,7 @@ server <- function(input, output, session) {
              paste0("True mean: ", round(true_mn, 1), " cm")
            ))
   })
-
+  
   output$t1_verdict <- renderUI({
     pop      <- t1_pop()
     true_mn  <- round(mean(pop$size), 1)
@@ -1167,36 +1221,36 @@ server <- function(input, output, session) {
     bias_sd  <- round(sd(bs), 1)
     rand_bias_obs <- round(rand_est - true_mn, 1)
     bias_bias_obs <- round(bias_est - true_mn, 1)
-
+    
     rs_sims  <- t1_rand_sims()
     bs_sims  <- t1_bias_sims()
     avg_rand_bias <- round(mean(rs_sims) - true_mn, 1)
     avg_bias_bias <- round(mean(bs_sims) - true_mn, 1)
-
+    
     method_name <- switch(input$t1_method,
-      random      = "a second random draw",
-      convenience = "convenience sampling (shore only)",
-      threshold   = paste0("size-threshold sampling (minimum ", input$t1_thresh, " cm)"),
-      volunteer   = "volunteer sampling (boldness bias)"
+                          random      = "a second random draw",
+                          convenience = "convenience sampling (shore only)",
+                          threshold   = paste0("size-threshold sampling (minimum ", input$t1_thresh, " cm)"),
+                          volunteer   = "volunteer sampling (boldness bias)"
     )
-
+    
     method_expl <- switch(input$t1_method,
-      random      = paste0("Both samples are drawn at random, so both are unbiased. ",
-                           "Any difference between their means is pure chance and shrinks as n grows."),
-      convenience = paste0("Sampling only from shore captures the smaller, shallower fish. ",
-                           "Larger fish in deeper water are never encountered. ",
-                           "Increasing sample size just gives a more precise underestimate — ",
-                           "the bias never goes away."),
-      threshold   = paste0("A net with large mesh releases everything below ", input$t1_thresh,
-                           " cm. Only larger fish are retained. ",
-                           "The harder the size cutoff, the further the estimate strays from truth. ",
-                           "This is exactly how commercial fishing data can mislead stock assessments."),
-      volunteer   = paste0("Bolder fish approach traps, cameras, or observers more readily, ",
-                           "and boldness is correlated with size. ",
-                           "The bias is subtler than a hard cutoff but accumulates invisibly across studies. ",
-                           "Moving the boldness slider toward 1 reveals how severe it can become.")
+                          random      = paste0("Both samples are drawn at random, so both are unbiased. ",
+                                               "Any difference between their means is pure chance and shrinks as n grows."),
+                          convenience = paste0("Sampling only from shore captures the smaller, shallower fish. ",
+                                               "Larger fish in deeper water are never encountered. ",
+                                               "Increasing sample size just gives a more precise underestimate — ",
+                                               "the bias never goes away."),
+                          threshold   = paste0("A net with large mesh releases everything below ", input$t1_thresh,
+                                               " cm. Only larger fish are retained. ",
+                                               "The harder the size cutoff, the further the estimate strays from truth. ",
+                                               "This is exactly how commercial fishing data can mislead stock assessments."),
+                          volunteer   = paste0("Bolder fish approach traps, cameras, or observers more readily, ",
+                                               "and boldness is correlated with size. ",
+                                               "The bias is subtler than a hard cutoff but accumulates invisibly across studies. ",
+                                               "Moving the boldness slider toward 1 reveals how severe it can become.")
     )
-
+    
     HTML(paste0(
       "True population mean: <b>", true_mn, " cm</b>.<br><br>",
       "This single resample: random = <b>", rand_est, " cm</b> (SD = ", rand_sd,
@@ -1212,7 +1266,7 @@ server <- function(input, output, session) {
       method_expl
     ))
   })
-
+  
   # ===== 2. SURVIVORSHIP BIAS ===============================================
   t2_data <- reactive({
     set.seed(101 + input$t2_new)
@@ -1223,7 +1277,7 @@ server <- function(input, output, session) {
     lost     <- runif(n) < vuln[hit_zone]
     list(zones = zones, hit_zone = hit_zone, returned = !lost, lost = lost, n = n)
   })
-
+  
   output$t2_plot <- renderPlot({
     d <- t2_data(); zones <- d$zones
     ret_counts  <- table(factor(d$hit_zone[d$returned], levels = zones))
@@ -1258,7 +1312,7 @@ server <- function(input, output, session) {
     text(1, ylim[2] * 0.84, "Wald: reinforce\nthese planes!",
          cex = 0.88, col = adjustcolor(orange, 0.90), font = 3, adj = c(0.5, 0))
   })
-
+  
   output$t2_verdict <- renderUI({
     d <- t2_data(); zones <- d$zones
     ret_counts  <- table(factor(d$hit_zone[d$returned], levels = zones))
@@ -1283,7 +1337,7 @@ server <- function(input, output, session) {
       "Lower it toward the wing vulnerability and watch the ghost bars equalise."
     ))
   })
-
+  
   # ===== 3. FILTERING BIAS ==================================================
   t3_data <- reactive({
     set.seed(1100 + input$t3_new)
@@ -1381,7 +1435,7 @@ server <- function(input, output, session) {
     n_el  <- sum(elite); p_el <- r_pval(r_el, n_el)
     p_txt <- if (p_el < 0.001) "p < 0.001" else paste0("p = ", round(p_el, 3))
     sig_txt <- if (p_el < 0.05) paste0("statistically significant (", p_txt, ")")
-               else paste0("not statistically significant (", p_txt, ")")
+    else paste0("not statistically significant (", p_txt, ")")
     HTML(paste0(
       "In the full population of <b>", input$t3_n, "</b> individuals, the true correlation is <b>r = ",
       if (r_pop >= 0) paste0("+", r_pop) else r_pop, "</b>. ",
@@ -1391,7 +1445,7 @@ server <- function(input, output, session) {
       "the population. Studying the elite in isolation leads to fundamentally wrong conclusions."
     ))
   })
-
+  
   # ===== 4. BASE RATE NEGLECT ===============================================
   t4_vals <- reactive({
     prev <- input$t4_prev / 100; sens <- input$t4_sens / 100
@@ -1444,7 +1498,7 @@ server <- function(input, output, session) {
       "Test accuracy (", input$t4_sens, "%) and PPV are very different numbers, and confusing them is dangerous."
     ))
   })
-
+  
   # ===== 5. SMALL SAMPLES ===================================================
   t5_sim <- reactive({
     set.seed(50 + input$t5_new); n <- input$t5_n; r <- numeric(600)
@@ -1483,7 +1537,7 @@ server <- function(input, output, session) {
                 if (!is.na(typical)) paste0(" (false positives here average |r| = <b>", typical, "</b>)"),
                 ". Small samples can only detect - and so only report - large effects."))
   })
-
+  
   # ===== 6. REGRESSION TO THE MEAN ==========================================
   t6_data <- reactive({
     set.seed(505 + input$t6_new)
@@ -1536,7 +1590,7 @@ server <- function(input, output, session) {
       "would be attributed to the programme failing - even if it had no effect at all."
     ))
   })
-
+  
   # ===== 7. WINNER'S CURSE ==================================================
   t7_sim <- reactive({
     set.seed(606 + input$t7_new)
@@ -1623,7 +1677,7 @@ server <- function(input, output, session) {
       "by virtue of being large enough to publish."
     ))
   })
-
+  
   # ===== 8. PSEUDOREPLICATION ===============================================
   t8_data <- reactive({
     set.seed(15 + input$t8_new)
@@ -1671,7 +1725,7 @@ server <- function(input, output, session) {
       crp, "</b>; pooled r = <b>", rp, "</b> (", sig(rp, crp), ")."
     ))
   })
-
+  
   # ===== 9. CIRCULAR ANALYSIS ===============================================
   t9_data <- reactive({
     set.seed(606 + input$t9_new)
@@ -1679,7 +1733,7 @@ server <- function(input, output, session) {
     post <- rel * pre + sqrt(1 - rel^2) * rnorm(n)
     list(pre = pre, post = post, high = pre >= median(pre))
   })
-
+  
   # 1000-simulation reactive — reruns when n or reliability changes
   t9_sims <- reactive({
     n <- input$t9_n; rel <- input$t9_rel; nsim <- 1000
@@ -1693,7 +1747,7 @@ server <- function(input, output, session) {
     }
     p_vals[!is.na(p_vals)]
   })
-
+  
   output$t9_plot <- renderPlot({
     d <- t9_data()
     lo_pre <- mean(d$pre[!d$high]); lo_post <- mean(d$post[!d$high])
@@ -1721,7 +1775,7 @@ server <- function(input, output, session) {
            legend = c(paste0("Interaction p = ", signif(ti_p, 2), if (ti_p < 0.05) " (significant)" else " (n.s.)"),
                       paste0("Effect size d = ", round(dval, 2), " (", mag, ")")))
   })
-
+  
   output$t9_sim <- renderPlot({
     p_vals  <- t9_sims()
     n_sig   <- sum(p_vals < 0.05)
@@ -1741,7 +1795,7 @@ server <- function(input, output, session) {
          paste0(pct_sig, "% significant — all false positives"),
          col = orange, cex = 1.05, font = 2, adj = 0.5)
   })
-
+  
   output$t9_verdict <- renderUI({
     d <- t9_data(); chg <- d$post - d$pre; ti_p <- t.test(chg ~ d$high)$p.value
     chh <- chg[d$high]; chl <- chg[!d$high]
@@ -1759,7 +1813,7 @@ server <- function(input, output, session) {
       "using the same noisy baseline data that is then being analysed."
     ))
   })
-
+  
   # ===== 10. GARDEN OF FORKING PATHS =========================================
   t10_sim <- reactive({
     set.seed(808 + input$t10_new)
@@ -1810,7 +1864,7 @@ server <- function(input, output, session) {
            legend = c("Simulated FPR (this run)", "Pocock (1977) approximation",
                       "5% nominal target", "Fixed sample (no peeking)"))
     usr <- par("usr")
- 
+    
   })
   output$t10_verdict <- renderUI({
     d <- t10_sim()
@@ -1846,7 +1900,7 @@ server <- function(input, output, session) {
       "<i>Biometrika</i>, 64: 191\u2013199."
     ))
   })
-
+  
   # ===== 11. P-HACKING ======================================================
   t11_full <- reactive({
     set.seed(707 + input$t11_new); n <- 40; group <- rep(c(0,1), each=n/2)
@@ -1908,7 +1962,7 @@ server <- function(input, output, session) {
       "Decide your analysis before seeing the data, and report every choice you made.</i>"
     ))
   })
-
+  
   # ===== 12. MULTIPLE COMPARISONS ===========================================
   t12_p <- reactive({ set.seed(80 + input$t12_new); runif(input$t12_m) })
   output$t12_squares <- renderPlot({
@@ -1953,7 +2007,7 @@ server <- function(input, output, session) {
       "holding the family-wise false-positive rate at about <b>", round(100*fwer_c, 1), "%</b>."
     ))
   })
-
+  
   # ===== 13. OVERFITTING ====================================================
   t13_data <- reactive({
     set.seed(1111 + input$t13_new); n <- input$t13_n; noise <- input$t13_noise
@@ -2007,7 +2061,7 @@ server <- function(input, output, session) {
                 "</b> and rises again. A model that memorises noise fits the past perfectly but predicts the future poorly. ",
                 "The gap between the teal and orange curves is the cost of overfitting."))
   })
-
+  
   # ===== 14. MEASUREMENT ERROR / ATTENUATION BIAS ===========================
   t14_data <- reactive({
     set.seed(1313 + input$t14_new)
@@ -2024,7 +2078,7 @@ server <- function(input, output, session) {
     list(x_true=x_true, y_true=y_true, x_obs=x_obs, y_obs=y_obs,
          beta=beta, err_x=err_x, err_y=err_y, n=n)
   })
-
+  
   output$t14_scatter <- renderPlot({
     d <- t14_data()
     # OLS on observed data
@@ -2034,32 +2088,32 @@ server <- function(input, output, session) {
     r_obs   <- cor(d$x_obs, d$y_obs)
     sd_x    <- sd(d$x_obs); sd_y <- sd(d$y_obs)
     b_rma   <- round(sign(r_obs) * sd_y / sd_x, 3)
-
+    
     xseq <- seq(min(d$x_obs), max(d$x_obs), length.out = 200)
-
+    
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$x_obs, d$y_obs, pch=19, col=adjustcolor(blue,0.45), cex=0.9,
          xlab="X (measured with error)", ylab="Y (measured with error)",
          main="Attenuation: measurement error shrinks the slope", bty="l")
-
+    
     # True slope line through origin of means
     mx <- mean(d$x_obs); my <- mean(d$y_obs)
     abline(my - d$beta * mx, d$beta, col="gray50", lwd=2, lty=3)
-
+    
     # OLS line
     abline(fit_ols, col=orange, lwd=2.5)
-
+    
     # RMA line (optional)
     if (input$t14_rma) {
       b0_rma <- my - b_rma * mx
       abline(b0_rma, b_rma, col=teal, lwd=2.5, lty=2)
     }
-
+    
     legend_labs <- c(paste0("True slope (\u03b2 = ", d$beta, ")"),
                      paste0("OLS slope (b = ", b_ols, ")"))
     legend_cols <- c("gray50", orange)
     legend_lty  <- c(3, 1); legend_lwd <- c(2, 2.5)
-
+    
     if (input$t14_rma) {
       legend_labs <- c(legend_labs, paste0("RMA slope (b = ", b_rma, ")"))
       legend_cols <- c(legend_cols, teal)
@@ -2069,7 +2123,7 @@ server <- function(input, output, session) {
     legend("topleft", bty="n", cex=0.95, lty=legend_lty, lwd=legend_lwd,
            col=legend_cols, legend=legend_labs)
   })
-
+  
   output$t14_slopes <- renderPlot({
     d <- t14_data()
     # Simulate many resamples to show distribution of OLS slope vs true
@@ -2083,7 +2137,7 @@ server <- function(input, output, session) {
       b_vec[i] <- coef(lm(yo ~ xo))[2]
     }
     b_rma_theory <- d$beta / (1 + (d$err_x^2) / (1 + d$err_y^2 / d$beta^2 + 0.001))
-
+    
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     hist(b_vec, breaks=30, col=adjustcolor(orange,0.65), border="white",
          xlim=c(min(b_vec) * 0.9, d$beta * 1.1),
@@ -2095,7 +2149,7 @@ server <- function(input, output, session) {
            legend=c(paste0("True \u03b2 = ",d$beta),
                     paste0("Mean OLS b = ",round(mean(b_vec),3))))
   })
-
+  
   output$t14_verdict <- renderUI({
     d <- t14_data()
     fit_ols <- lm(d$y_obs ~ d$x_obs)
@@ -2103,7 +2157,7 @@ server <- function(input, output, session) {
     r_obs   <- cor(d$x_obs, d$y_obs)
     b_rma   <- round(sign(r_obs) * sd(d$y_obs) / sd(d$x_obs), 3)
     pct_att <- round(100 * (d$beta - b_ols) / d$beta)
-
+    
     HTML(paste0(
       "The true slope is <b>\u03b2 = ", d$beta, "</b>. With measurement error of <b>",
       d$err_x, "</b> in X and <b>", d$err_y, "</b> in Y, the OLS slope estimate is <b>b = ",
@@ -2122,7 +2176,7 @@ server <- function(input, output, session) {
       "systematically underestimates the truth - this is a bias, not just random noise."
     ))
   })
-
+  
   # ===== 15. MISSING CONTROL GROUP ==========================================
   t15_data <- reactive({
     set.seed(101 + input$t15_new); n <- input$t15_n
@@ -2153,7 +2207,7 @@ server <- function(input, output, session) {
                 "</b> units with no treatment at all. The genuine treatment effect is about <b>",
                 round(apparent-control,2),"</b> units. Without a control group you would have credited the whole rise to the treatment."))
   })
-
+  
   # ===== 16. COMPARING SIGNIFICANCE =========================================
   t16_data <- reactive({
     set.seed(202 + input$t16_new); n <- input$t16_n
@@ -2176,13 +2230,13 @@ server <- function(input, output, session) {
     d <- t16_data(); sC <- mean_ci(d$C); sD <- mean_ci(d$D)
     pC <- t.test(d$C, mu=0)$p.value
     pD <- t.test(d$D, mu=0)$p.value
-
+    
     # Expand y range downward to make room for the indirect comparison bracket
     yr   <- range(c(d$C, d$D))
     ypad <- diff(yr) * 0.35
     #yl   <- c(yr[1] - ypad, yr[2] + 0.5) no longer used
     yl   <-c(-2, 3)
-
+    
     par(mar=c(4.5, 4.5, 3, 1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(NULL, xlim=c(0.5, 2.5), ylim=yl, xaxt="n", xlab="",
          ylab="Effect (difference from zero)",
@@ -2192,7 +2246,7 @@ server <- function(input, output, session) {
     points(jitter(rep(1,length(d$C)),amount=0.08), d$C, col="gray80", pch=19, cex=0.5)
     points(jitter(rep(2,length(d$D)),amount=0.08), d$D, col="gray80", pch=19, cex=0.5)
     draw_ci(1, sC, teal); draw_ci(2, sD, orange)
-
+    
     # ── Correct way bracket (top of plot, spanning C to D) ──────────────────
     usr   <- par("usr")
     bk_y  <- usr[4] * 0.92
@@ -2201,13 +2255,13 @@ server <- function(input, output, session) {
           col="gray40", lwd=1.5)
     text(1.5, bk_y + diff(usr[3:4])*0.02,
          "Direct Comparison - Correct Way", col="gray40", cex=1, font=3)
-
+    
     # ── Wrong way: vertical brackets from mean down to y=0 ──────────────────
     # Each bracket is drawn as } facing inward using segments + small ticks
     # C bracket on right side (teal), D bracket on left side (orange)
     tick_w <- 0.08   # horizontal tick width
     bk_bot <- 0      # brackets are tethered to zero
-
+    
     # Helper: draw a curly-bracket-style indicator using segments
     # xpos = group x position, col = colour, side = +1 (right) or -1 (left)
     draw_vseg <- function(xpos, top, col, side) {
@@ -2218,7 +2272,7 @@ server <- function(input, output, session) {
       # tick at bottom (zero)
       segments(xpos, bk_bot, xpos + side*tick_w, bk_bot, col=col, lwd=1.8)
     }
-
+    
     # C bracket: vertical line slightly to right of x=1, opening rightward
     draw_vseg(1 + 0.15, sC$m, teal,   -1)
     draw_vseg(2 - 0.15, sD$m, orange, +1)
@@ -2229,7 +2283,7 @@ server <- function(input, output, session) {
          col=teal,   cex=0.95, font=2, adj=0)
     text(2 - 0.20, mid_D, paste0("p=", format(round(pD,3), nsmall=3)),
          col=orange, cex=0.95, font=2, adj=1)
-
+    
     # ── Horizontal bracket connecting C and D at y=0 (wrong way) ────────────
     brk_y  <- bk_bot - diff(usr[3:4]) * 0.06   # slightly below zero line
     brk_dy <- diff(usr[3:4]) * 0.025            # small upward ticks at each end
@@ -2256,14 +2310,14 @@ server <- function(input, output, session) {
     pD  <- t.test(d$D, mu=0)$p.value
     pCD <- t.test(d$C, d$D)$p.value
     sig <- function(p) if (p < 0.05) "significant" else "not significant"
-
+    
     # Wrong-way logic: indirect comparison concludes "are different" only when
     # exactly one group is significant (one crosses threshold, one does not)
     # — this is the classic error students make
     sig_C <- pC < 0.05
     sig_D <- pD < 0.05
     indirect_conclusion <- if (xor(sig_C, sig_D)) "<b>are</b>" else "<b>are not</b>"
-
+    
     HTML(paste0(
       "Group C vs zero: <b>p=", signif(pC,2), "</b> (<b>", sig(pC), "</b>). ",
       "Group D vs zero: <b>p=", signif(pD,2), "</b> (<b>", sig(pD), "</b>). ",
@@ -2275,7 +2329,7 @@ server <- function(input, output, session) {
       "<br><br>"
     ))
   })
-
+  
   # ===== 17. NON-SIGNIFICANT RESULTS ========================================
   t17_data <- reactive({
     eff <- input$t17_eff; ns <- c(8,16,32,64,128)
@@ -2319,27 +2373,101 @@ server <- function(input, output, session) {
     if (eff==0) HTML(paste0("Here the true effect really is <b>zero</b>. Even so, small studies cannot prove that - their intervals are wide. A non-significant result with a small sample is uninformative, not proof of no effect.<br><br>", theory_note))
     else HTML(paste0("The true effect is <b>",eff,"</b>. Yet small studies give wide intervals that may include zero and read as non-significant. The effect did not disappear - the study was too small to detect it.<br><br>", theory_note))
   })
-
-  # ===== 18. SPURIOUS CORRELATIONS ==========================================
-  output$t18_slider <- renderUI({
-    if (input$t18_type=="outlier")
-      sliderInput("t18_d","Distance of the outlier:", value=4,min=0,max=8,step=0.5)
-    else
-      sliderInput("t18_s","Separation of the two subgroups:", value=3,min=0,max=6,step=0.5)
-  })
-  t18_base <- reactive({ set.seed(40+input$t18_new); list(X=rnorm(20,0,1),Y=rnorm(20,0,1)) })
+  
+  # ===== 18. P-VALUE != EFFECT SIZE =========================================
   t18_data <- reactive({
-    b <- t18_base()
-    if (input$t18_type=="outlier") {
-      req(input$t18_d)
-      list(X=c(b$X,input$t18_d), Y=c(b$Y,input$t18_d), grp=c(rep(1,20),2))
+    set.seed(3141 + input$t18_new)
+    n     <- input$t18_n
+    reps  <- input$t18_reps
+    delta <- input$t18_meandiff
+    pvals <- numeric(reps)
+    dvals <- numeric(reps)
+    for (i in seq_len(reps)) {
+      x  <- rnorm(n, 0, 1)
+      y  <- rnorm(n, delta, 1)
+      pvals[i] <- t.test(x, y)$p.value
+      sp       <- sqrt(((n - 1) * var(x) + (n - 1) * var(y)) / (2 * n - 2))
+      dvals[i] <- (mean(y) - mean(x)) / sp
+    }
+    list(p = pvals, d = dvals)
+  })
+  output$t18_curve <- renderPlot({
+    d  <- t18_data()
+    n  <- input$t18_n
+    xr <- max(1, max(abs(d$d), na.rm = TRUE) * 1.1)
+    dgrid <- seq(-xr, xr, length.out = 300)
+    tgrid <- dgrid * sqrt(n / 2)
+    pgrid <- 2 * pt(-abs(tgrid), df = 2 * n - 2)
+    par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
+    plot(dgrid, pgrid, type="l", lwd=3, col=teal, xlim=c(-xr,xr), ylim=c(0,1),
+         xlab="Observed effect size (Cohen's d)", ylab="p-value",
+         main=paste0("This run's draws (n = ", n, " per group)"), bty="l")
+    abline(h=0.05, col=orange, lty=2, lwd=2)
+    points(d$d, d$p, pch=19, cex=0.9,
+           col=adjustcolor(ifelse(d$p < 0.05, orange, blue), 0.75))
+    legend("topright", bty="n", cex=0.95, lwd=c(3,NA,NA), lty=c(1,NA,NA), pch=c(NA,19,19),
+           col=c(teal, orange, blue),
+           legend=c("theoretical curve (this n)", "significant (p<.05)", "not significant"))
+  })
+  output$t18_hist <- renderPlot({
+    d <- t18_data()
+    par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
+    hist(d$p, breaks=seq(0,1,0.05), col=teal, border="white",
+         xlab="p-value", ylab="Number of replications",
+         main="Same draws, p-value only", bty="l")
+    abline(v=0.05, col=orange, lty=2, lwd=2)
+    legend("topright", bty="n", cex=1.0, lwd=2, lty=2, col=orange, legend="\u03b1 = 0.05")
+  })
+  output$t18_verdict <- renderUI({
+    d       <- t18_data()
+    n       <- input$t18_n
+    pct_sig <- round(100 * mean(d$p < 0.05))
+    delta   <- input$t18_meandiff
+    if (delta == 0) {
+      HTML(paste0(
+        "The true mean difference here is <b>zero</b> - there is no real effect. Even so, ",
+        "<b>", pct_sig, "%</b> of your ", input$t18_reps, " replications came out ",
+        "'significant' at \u03b1 = 0.05, purely by chance. On the left, your dots trace out ",
+        "the curve for n = ", n, " per group exactly - once you know the observed d and the ",
+        "sample size, p is fixed, with no extra randomness at that step. On the right, notice ",
+        "the flat histogram: under a true null, p-values are spread roughly <b>uniformly</b> ",
+        "from 0 to 1 - a p of 0.01 is exactly as likely as a p of 0.51. A small p-value here ",
+        "does not mean a big effect; there is no effect at all."
+      ))
     } else {
-      req(input$t18_s); shift <- c(rep(0,10),rep(input$t18_s,10))
+      HTML(paste0(
+        "The true mean difference is <b>", delta, "</b>. Of these replications, <b>", pct_sig,
+        "%</b> of replications were significant at \u03b1 = 0.05. Every dot on the left sits ",
+        "exactly on the curve for n = ", n, " per group - that curve is the complete, fixed ",
+        "conversion from observed effect size to p-value at this sample size. Change the ",
+        "sample-size slider and watch the curve itself shift: the same p = 0.05 threshold ",
+        "lines up with a much bigger d for a small study than for a large one. That's why a ",
+        "p-value alone, without knowing the sample size, tells you nothing about how big the ",
+        "effect actually was."
+      ))
+    }
+  })
+  
+  # ===== 19. SPURIOUS CORRELATIONS ==========================================
+  output$t19_slider <- renderUI({
+    if (input$t19_type=="outlier")
+      sliderInput("t19_d","Distance of the outlier:", value=4,min=0,max=8,step=0.5)
+    else
+      sliderInput("t19_s","Separation of the two subgroups:", value=3,min=0,max=6,step=0.5)
+  })
+  t19_base <- reactive({ set.seed(40+input$t19_new); list(X=rnorm(20,0,1),Y=rnorm(20,0,1)) })
+  t19_data <- reactive({
+    b <- t19_base()
+    if (input$t19_type=="outlier") {
+      req(input$t19_d)
+      list(X=c(b$X,input$t19_d), Y=c(b$Y,input$t19_d), grp=c(rep(1,20),2))
+    } else {
+      req(input$t19_s); shift <- c(rep(0,10),rep(input$t19_s,10))
       list(X=b$X+shift, Y=b$Y+shift, grp=c(rep(1,10),rep(2,10)))
     }
   })
-  output$t18_plot <- renderPlot({
-    d <- t18_data(); r <- cor(d$X,d$Y); ci <- boot_r_ci(d$X,d$Y)
+  output$t19_plot <- renderPlot({
+    d <- t19_data(); r <- cor(d$X,d$Y); ci <- boot_r_ci(d$X,d$Y)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$X,d$Y,pch=19,col=ifelse(d$grp==2,orange,blue),cex=1.3,
          xlab="X",ylab="Y", main="Pearson correlation can be created by structure in the data",bty="l")
@@ -2347,18 +2475,18 @@ server <- function(input, output, session) {
     legend("topleft",bty="n",cex=1.2,
            legend=paste0("r = ",round(r,2),"   95% CI [",round(ci[1],2),", ",round(ci[2],2),"]"))
   })
-  output$t18_verdict <- renderUI({
-    d <- t18_data(); r <- cor(d$X,d$Y)
-    if (input$t18_type=="outlier")
+  output$t19_verdict <- renderUI({
+    d <- t19_data(); r <- cor(d$X,d$Y)
+    if (input$t19_type=="outlier")
       HTML(paste0("X and Y are unrelated, plus one extra point. As it moves away, r climbs to <b>",round(r,2),"</b> even though nothing changed. Always plot the data."))
     else
       HTML(paste0("Two unrelated clusters pooled together. As they pull apart, r rises to <b>",round(r,2),"</b>, purely from the gap between groups."))
   })
-
-  # ===== 19. ECOLOGICAL FALLACY =============================================
-  t19_data <- reactive({
-    set.seed(1616 + input$t19_new)
-    ng <- input$t19_groups; ni <- input$t19_n; rw <- input$t19_within; bs <- input$t19_between
+  
+  # ===== 20. ECOLOGICAL FALLACY =============================================
+  t20_data <- reactive({
+    set.seed(1616 + input$t20_new)
+    ng <- input$t20_groups; ni <- input$t20_n; rw <- input$t20_within; bs <- input$t20_between
     gm_x <- seq(0, bs*(ng-1), length.out=ng); gm_y <- rev(gm_x)
     all_x <- all_y <- grp <- numeric(ng*ni)
     for (g in seq_len(ng)) {
@@ -2371,8 +2499,8 @@ server <- function(input, output, session) {
          r_ind=cor(all_x,all_y), r_grp=if(ng>1) cor(as.numeric(gx),as.numeric(gy)) else NA)
   })
   grp_cols <- function(ng) sapply(seq(0.1,0.9,length.out=ng), function(h) hsv(h,0.65,0.75))
-  output$t19_grouped <- renderPlot({
-    d <- t19_data(); ng <- input$t19_groups; cols <- grp_cols(ng)
+  output$t20_grouped <- renderPlot({
+    d <- t20_data(); ng <- input$t20_groups; cols <- grp_cols(ng)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$gx,d$gy,pch=19,col=cols,cex=3.5,
          xlab="Group mean X",ylab="Group mean Y",main="Group-level data",bty="l",
@@ -2381,8 +2509,8 @@ server <- function(input, output, session) {
     legend("topright",bty="n",cex=1.1,
            legend=paste0("r (groups) = ",if(!is.na(d$r_grp)) round(d$r_grp,2) else "N/A"))
   })
-  output$t19_individual <- renderPlot({
-    d <- t19_data(); ng <- input$t19_groups; cols <- grp_cols(ng)
+  output$t20_individual <- renderPlot({
+    d <- t20_data(); ng <- input$t20_groups; cols <- grp_cols(ng)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$x,d$y,pch=19,col=adjustcolor(cols[d$grp],0.60),cex=0.8,
          xlab="Individual X",ylab="Individual Y",main="Individual-level data",bty="l")
@@ -2393,9 +2521,9 @@ server <- function(input, output, session) {
     }
     legend("topright",bty="n",cex=1.1,legend=paste0("r (all individuals, ignoring groups) = ",round(d$r_ind,2)))
   })
-  output$t19_verdict <- renderUI({
-    d    <- t19_data()
-    rw   <- input$t19_within   # true within-group (individual) correlation from slider
+  output$t20_verdict <- renderUI({
+    d    <- t20_data()
+    rw   <- input$t20_within   # true within-group (individual) correlation from slider
     r_g  <- if (!is.na(d$r_grp)) round(d$r_grp, 2) else "N/A"
     r_i  <- round(d$r_ind, 2)  # pooled across all individuals ignoring group structure
     
@@ -2444,16 +2572,16 @@ server <- function(input, output, session) {
       "<br><br>Drawing conclusions about individuals from group-level data is the ecological fallacy."
     ))
   })
-
-  # ===== 20. CORRELATION VS CAUSATION =======================================
-  t20_data <- reactive({
-    set.seed(1010); n<-80; s<-input$t20_str; Z<-rnorm(n)
+  
+  # ===== 21. CORRELATION VS CAUSATION =======================================
+  t21_data <- reactive({
+    set.seed(1010); n<-80; s<-input$t21_str; Z<-rnorm(n)
     Xz<-s*Z+sqrt(1-s^2)*rnorm(n); Yz<-s*Z+sqrt(1-s^2)*rnorm(n)
     list(X=round(pmax(0,5+2.2*Xz),1), Y=round(pmax(0,8+3*Yz),1), Z=Z)
   })
-  output$t20_plot <- renderPlot({
-    d <- t20_data()
-    if (input$t20_ctrl) {
+  output$t21_plot <- renderPlot({
+    d <- t21_data()
+    if (input$t21_ctrl) {
       rx<-resid(lm(d$X~d$Z)); ry<-resid(lm(d$Y~d$Z)); r<-cor(rx,ry)
       par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.15, cex.main=1.2)
       plot(rx,ry,pch=19,col=blue,cex=1.2,
@@ -2470,18 +2598,18 @@ server <- function(input, output, session) {
       abline(lm(d$Y~d$X),col="black",lty=2,lwd=2)
     }
     legend("topleft",bty="n",cex=1.2,
-           legend=paste0("r = ",round(if(input$t20_ctrl) cor(resid(lm(d$X~d$Z)),resid(lm(d$Y~d$Z))) else cor(d$X,d$Y),2)))
+           legend=paste0("r = ",round(if(input$t21_ctrl) cor(resid(lm(d$X~d$Z)),resid(lm(d$Y~d$Z))) else cor(d$X,d$Y),2)))
     mtext("Illustrative simulated data",side=1,line=3.8,adj=1,cex=0.85,col="gray50")
   })
-  output$t20_verdict <- renderUI({
-    d<-t20_data(); r_raw<-cor(d$X,d$Y)
+  output$t21_verdict <- renderUI({
+    d<-t21_data(); r_raw<-cor(d$X,d$Y)
     rx<-resid(lm(d$X~d$Z)); ry<-resid(lm(d$Y~d$Z)); r_adj<-cor(rx,ry)
-    if(input$t20_ctrl)
+    if(input$t21_ctrl)
       HTML(paste0("Once we account for national wealth, the correlation drops to r = <b>",round(r_adj,2),"</b> - essentially nothing. The apparent link was never about chocolate; it was wealth driving both."))
     else
       HTML(paste0("Chocolate and Nobel laureates correlate at r = <b>",round(r_raw,2),"</b>. But wealthier countries simply have more of both. Tick the box to account for national wealth and watch the correlation collapse."))
   })
-
+  
 }  # end server
 
 # ---- launch -----------------------------------------------------------------
