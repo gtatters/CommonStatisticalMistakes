@@ -1736,6 +1736,7 @@ server <- function(input, output, session) {
   
   # 1000-simulation reactive — reruns when n or reliability changes
   t9_sims <- reactive({
+    set.seed(6060 + input$t9_new)
     n <- input$t9_n; rel <- input$t9_rel; nsim <- 1000
     p_vals <- numeric(nsim)
     for (i in seq_len(nsim)) {
