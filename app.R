@@ -832,6 +832,9 @@ ui <- fluidPage(
                         value = 1.8, min = 1, max = 3, step = 0.1),
             sliderInput("t16_n",   "Participants per group:",
                         value = 20, min = 8, max = 80),
+            selectInput("t16_alpha", "Significance threshold (\u03b1):",
+                        choices = c("0.001", "0.01", "0.05", "0.1"),
+                        selected = "0.05"),
             actionButton("t16_new", "Resample")
           )
         ),
@@ -2216,14 +2219,15 @@ server <- function(input, output, session) {
   })
   t16_rates <- reactive({
     set.seed(202 + input$t16_new); n <- input$t16_n; eff <- input$t16_eff; v <- input$t16_var
-    tc1 <- qt(0.975,n-1); wrong <- 0L; right <- 0L
+    alpha <- as.numeric(input$t16_alpha)
+    tc1 <- qt(1 - alpha/2, n-1); wrong <- 0L; right <- 0L
     for (i in seq_len(1000)) {
       C <- rnorm(n,eff,1); D <- rnorm(n,eff,v)
       sigC <- abs(mean(C)/(sd(C)/sqrt(n)))>tc1; sigD <- abs(mean(D)/(sd(D)/sqrt(n)))>tc1
       vC<-var(C); vD<-var(D); se<-sqrt(vC/n+vD/n); tCD<-(mean(C)-mean(D))/se
       df <- (vC/n+vD/n)^2/((vC/n)^2/(n-1)+(vD/n)^2/(n-1))
       if (xor(sigC,sigD)) wrong <- wrong+1L
-      if (abs(tCD)>qt(0.975,df)) right <- right+1L
+      if (abs(tCD)>qt(1 - alpha/2, df)) right <- right+1L
     }
     c(wrong=wrong/1000, right=right/1000)
   })
@@ -2232,16 +2236,13 @@ server <- function(input, output, session) {
     pC <- t.test(d$C, mu=0)$p.value
     pD <- t.test(d$D, mu=0)$p.value
     
-    # Expand y range downward to make room for the indirect comparison bracket
-    yr   <- range(c(d$C, d$D))
-    ypad <- diff(yr) * 0.35
-    #yl   <- c(yr[1] - ypad, yr[2] + 0.5) no longer used
-    yl   <-c(-2, 3)
+    yl <- c(-2, 3)
     
+    # Taller top margin + two-line title so it fits on a half-width iPad column
     par(mar=c(4.5, 4.5, 3, 1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(NULL, xlim=c(0.5, 2.5), ylim=yl, xaxt="n", xlab="",
          ylab="Effect (difference from zero)",
-         main="Each group tested against zero, then against each other", bty="l")
+         main="Each group vs. zero, then vs. each other", bty="l")
     axis(1, at=c(1,2), labels=c("Group C","Group D"), cex.axis=1.2)
     abline(h=0, col="gray70", lty=2)
     points(jitter(rep(1,length(d$C)),amount=0.08), d$C, col="gray80", pch=19, cex=0.5)
@@ -2258,23 +2259,13 @@ server <- function(input, output, session) {
          "Direct Comparison - Correct Way", col="gray40", cex=1, font=3)
     
     # ── Wrong way: vertical brackets from mean down to y=0 ──────────────────
-    # Each bracket is drawn as } facing inward using segments + small ticks
-    # C bracket on right side (teal), D bracket on left side (orange)
-    tick_w <- 0.08   # horizontal tick width
-    bk_bot <- 0      # brackets are tethered to zero
-    
-    # Helper: draw a curly-bracket-style indicator using segments
-    # xpos = group x position, col = colour, side = +1 (right) or -1 (left)
+    tick_w <- 0.08
+    bk_bot <- 0
     draw_vseg <- function(xpos, top, col, side) {
-      # vertical line
       segments(xpos, bk_bot, xpos, top, col=col, lwd=1.8)
-      # tick at top (mean level)
       segments(xpos, top, xpos + side*tick_w, top, col=col, lwd=1.8)
-      # tick at bottom (zero)
       segments(xpos, bk_bot, xpos + side*tick_w, bk_bot, col=col, lwd=1.8)
     }
-    
-    # C bracket: vertical line slightly to right of x=1, opening rightward
     draw_vseg(1 + 0.15, sC$m, teal,   -1)
     draw_vseg(2 - 0.15, sD$m, orange, +1)
     
@@ -2286,48 +2277,57 @@ server <- function(input, output, session) {
          col=orange, cex=0.95, font=2, adj=1)
     
     # ── Horizontal bracket connecting C and D at y=0 (wrong way) ────────────
-    brk_y  <- bk_bot - diff(usr[3:4]) * 0.06   # slightly below zero line
-    brk_dy <- diff(usr[3:4]) * 0.025            # small upward ticks at each end
+    brk_y  <- bk_bot - diff(usr[3:4]) * 0.06
+    brk_dy <- diff(usr[3:4]) * 0.025
     lines(c(1+0.10, 1+0.10, 2-0.10, 2-0.10),
           c(brk_y+brk_dy, brk_y, brk_y, brk_y+brk_dy),
           col="gray30", lwd=1.5)
     text(1.5, brk_y - diff(usr[3:4])*0.04,
-         "Indirect Comparison – Wrong Way",
+         "Indirect Comparison \u2013 Wrong Way",
          col="gray30", cex=0.9, font=3, adj=0.5)
   })
   output$t16_sim <- renderPlot({
-    r <- t16_rates(); pct <- round(100*r)
+    r <- t16_rates()
+    pct <- ifelse(100*r < 10, sprintf("%.1f", 100*r), sprintf("%.0f", 100*r))
+    alpha <- as.numeric(input$t16_alpha)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     bp <- barplot(c(r["wrong"],r["right"])*100, col=c(orange,teal), border="white", ylim=c(0,100),
                   names.arg=c("Wrong way","Correct way"),
                   ylab="% of 1000 studies finding a difference",
                   main="Same mean: every difference is a false alarm")
-    abline(h=5, col="black", lty=2, lwd=2)
-    text(bp, c(r["wrong"],r["right"])*100+5, labels=paste0(pct,"%"), cex=1.6, font=2)
+    abline(h=100*alpha, col="black", lty=2, lwd=2)
+    legend("topright", bty="n", cex=1.0, lty=2, lwd=2, col="black",
+           legend=paste0("\u03b1 = ", alpha, " (expected false-alarm rate)"))
+    text(bp, c(r["wrong"],r["right"])*100+2, adj=c(0.5, 0), cex=1.4, font=2,
+         labels=paste0(pct, "%\n(", round(1000*r), " of 1000)"))
   })
   output$t16_verdict <- renderUI({
     d <- t16_data(); r <- t16_rates()
+    alpha <- as.numeric(input$t16_alpha)
     pC  <- t.test(d$C, mu=0)$p.value
     pD  <- t.test(d$D, mu=0)$p.value
     pCD <- t.test(d$C, d$D)$p.value
-    sig <- function(p) if (p < 0.05) "significant" else "not significant"
+    sig <- function(p) if (p < alpha) "significant" else "not significant"
     
     # Wrong-way logic: indirect comparison concludes "are different" only when
     # exactly one group is significant (one crosses threshold, one does not)
-    # — this is the classic error students make
-    sig_C <- pC < 0.05
-    sig_D <- pD < 0.05
+    sig_C <- pC < alpha
+    sig_D <- pD < alpha
     indirect_conclusion <- if (xor(sig_C, sig_D)) "<b>are</b>" else "<b>are not</b>"
     
     HTML(paste0(
+      "Using \u03b1 = <b>", alpha, "</b>:<br>",
       "Group C vs zero: <b>p=", signif(pC,2), "</b> (<b>", sig(pC), "</b>). ",
       "Group D vs zero: <b>p=", signif(pD,2), "</b> (<b>", sig(pD), "</b>). ",
       "Direct comparison: <b>p=", signif(pCD,2), "</b> (<b>", sig(pCD), "</b>).<br> ",
       "The indirect comparison would conclude that Group C and Group D ",
       indirect_conclusion, " significantly different from each other.<br><br>",
-      "The wrong method wrongly declares a difference about ", round(100*r["wrong"]),
-      "% of the time. A difference in significance is not a significant difference.",
-      "<br><br>"
+      "Both groups have the same true mean, so any 'difference' is a false alarm. ",
+      "The wrong method declares a difference about <b>", round(100*r["wrong"]),
+      "%</b> of the time. The correct method does so about <b>", sprintf("%.1f", 100*r["right"]),
+      "%</b> of the time, close to the ", round(100*alpha, 1),
+      "% you agreed to risk when you chose \u03b1. ",
+      "A difference in significance is not a significant difference."
     ))
   })
   
