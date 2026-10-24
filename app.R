@@ -47,6 +47,24 @@ r_pval <- function(r, n) {
   2 * pt(-abs(t_stat), df = n - 2)
 }
 
+# ---- Safari-safe plotting ----------------------------------------------------
+# Draws a base-R plot as a PNG image. Stand-in for renderPlot(), which
+# currently fails in Safari under Shinylive. Use with imageOutput().
+render_base <- function(id, session, draw) {
+  renderImage({
+    cd <- session$clientData
+    w  <- cd[[paste0("output_", id, "_width")]]
+    h  <- cd[[paste0("output_", id, "_height")]]
+    req(w > 0, h > 0)
+    pr <- cd$pixelratio
+    if (is.null(pr)) pr <- 1
+    f <- tempfile(fileext = ".png")
+    png(f, width = w * pr, height = h * pr, res = 72 * pr)
+    tryCatch(draw(), finally = dev.off())
+    list(src = f, contentType = "image/png", width = w, height = h)
+  }, deleteFile = TRUE)
+}
+
 # ================================ UI =========================================
 ui <- fluidPage(
   titlePanel("Common Mistakes, Mishaps, and Misconceptions in Science",
@@ -56,6 +74,10 @@ ui <- fluidPage(
     ".action-button { color:#fff; background-color:#569BBD; border:none; }
      .action-button:hover { color:#fff; background-color:#3E7C99; }
      .action-button:active { transform:scale(0.97); }
+
+     /* While R is busy redrawing, grey out buttons so repeated clicks
+        can't pile up (rapid updates can crash Safari under Shinylive) */
+     html.shiny-busy .action-button { pointer-events: none; opacity: 0.5; }
 
      /* Active tab: teal text, bold, top border highlight */
      .nav-tabs > li.active > a,
@@ -195,13 +217,13 @@ ui <- fluidPage(
           wellPanel(
             p(strong("The mistake")),
             p("Random sampling gives every individual an equal chance of being measured. ",
-              "Non-random sampling does not — and the result is a ", strong("biased estimate"),
+              "Non-random sampling does not, and the result is a ", strong("biased estimate"),
               " that is systematically wrong no matter how large your sample grows. ",
               "More data from a biased method just gives you a more precise wrong answer."),
             p("Here a lake holds fish of many sizes. Teal shows what a truly random sample ",
               "looks like. Orange shows what your chosen sampling method selects. ",
               "Watch the right-hand plot to see how 500 simulated studies accumulate around ",
-              "different values — bias is the gap between the two histogram clouds."),
+              "different values. Bias is the gap between the two histogram clouds."),
             hr(),
             sliderInput("t1_npop", "Population size (fish in lake):",
                         value = 800, min = 200, max = 2000, step = 100),
@@ -230,8 +252,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t1_pop",  height = "380px")),
-            column(6, plotOutput("t1_sim",  height = "380px"))
+            column(6, imageOutput("t1_pop",  height = "380px")),
+            column(6, imageOutput("t1_sim",  height = "380px"))
           ),
           br(),
           wellPanel(div(uiOutput("t1_verdict"), align = "justify"))
@@ -279,7 +301,7 @@ ui <- fluidPage(
           fluidRow(
             column(
               width = 7,
-              plotOutput("t2_plot", height = "380px")
+              imageOutput("t2_plot", height = "380px")
             ),
             column(
               width = 5,
@@ -341,8 +363,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t3_plot_pop",   height = "380px")),
-            column(6, plotOutput("t3_plot_elite", height = "380px"))
+            column(6, imageOutput("t3_plot_pop",   height = "380px")),
+            column(6, imageOutput("t3_plot_elite", height = "380px"))
           ),
           wellPanel(
             fluidRow(
@@ -400,8 +422,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t4_ppv",   height = "380px")),
-            column(6, plotOutput("t4_crowd", height = "380px"))
+            column(6, imageOutput("t4_ppv",   height = "380px")),
+            column(6, imageOutput("t4_crowd", height = "380px"))
           ),
           wellPanel(div(uiOutput("t4_verdict"), align = "justify"))
         )
@@ -432,8 +454,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t5_scatter", height = "440px")),
-            column(6, plotOutput("t5_hist",    height = "440px"))
+            column(6, imageOutput("t5_scatter", height = "440px")),
+            column(6, imageOutput("t5_hist",    height = "440px"))
           ),
           wellPanel(div(uiOutput("t5_verdict"), align = "justify"))
         )
@@ -475,8 +497,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t6_scatter", height = "380px")),
-            column(6, plotOutput("t6_bars",    height = "380px"))
+            column(6, imageOutput("t6_scatter", height = "380px")),
+            column(6, imageOutput("t6_bars",    height = "380px"))
           ),
           wellPanel(div(uiOutput("t6_verdict"), align = "justify"))
         )
@@ -515,8 +537,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t7_all",       height = "380px")),
-            column(6, plotOutput("t7_published", height = "380px"))
+            column(6, imageOutput("t7_all",       height = "380px")),
+            column(6, imageOutput("t7_published", height = "380px"))
           ),
           wellPanel(div(uiOutput("t7_verdict"), align = "justify"))
         )
@@ -552,8 +574,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t8_plot",    height = "440px")),
-            column(6, plotOutput("t8_scatter", height = "440px"))
+            column(6, imageOutput("t8_plot",    height = "440px")),
+            column(6, imageOutput("t8_scatter", height = "440px"))
           ),
           wellPanel(div(uiOutput("t8_verdict"), align = "justify"))
         )
@@ -586,8 +608,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t9_plot", height = "400px")),
-            column(6, plotOutput("t9_sim",  height = "400px"))
+            column(6, imageOutput("t9_plot", height = "400px")),
+            column(6, imageOutput("t9_sim",  height = "400px"))
           ),
           wellPanel(div(uiOutput("t9_verdict"), align = "justify"))
         )
@@ -609,7 +631,7 @@ ui <- fluidPage(
               " - a decision point where the analysis could have gone another way. ",
               "Even if every individual decision seems reasonable, the combined effect ",
               "of multiple decision points inflates the false positive rate far above 5%."),
-            p("This is distinct from p-hacking (Tab 10) because here the researcher ",
+            p("This is distinct from p-hacking (Tab 11) because here the researcher ",
               "is not trying many different analyses - they are just deciding ",
               strong("when to stop collecting data"), " based on the results so far. ",
               "This is called ", strong("optional stopping"), " and is surprisingly common."),
@@ -625,8 +647,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t10_pvals", height = "380px")),
-            column(6, plotOutput("t10_fpr",   height = "380px"))
+            column(6, imageOutput("t10_pvals", height = "380px")),
+            column(6, imageOutput("t10_fpr",   height = "380px"))
           ),
           wellPanel(div(uiOutput("t10_verdict"), align = "justify"))
         )
@@ -656,8 +678,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t11_plot", height = "440px")),
-            column(6, plotOutput("t11_raw",  height = "440px"))
+            column(6, imageOutput("t11_plot", height = "440px")),
+            column(6, imageOutput("t11_raw",  height = "440px"))
           ),
           wellPanel(div(uiOutput("t11_verdict"), align = "justify"))
         )
@@ -687,8 +709,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t12_squares", height = "440px")),
-            column(6, plotOutput("t12_curve",   height = "440px"))
+            column(6, imageOutput("t12_squares", height = "440px")),
+            column(6, imageOutput("t12_curve",   height = "440px"))
           ),
           wellPanel(div(uiOutput("t12_verdict"), align = "justify"))
         )
@@ -728,8 +750,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t13_fit", height = "380px")),
-            column(6, plotOutput("t13_err", height = "380px"))
+            column(6, imageOutput("t13_fit", height = "380px")),
+            column(6, imageOutput("t13_err", height = "380px"))
           ),
           wellPanel(div(uiOutput("t13_verdict"), align = "justify"))
         )
@@ -774,8 +796,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t14_scatter", height = "380px")),
-            column(6, plotOutput("t14_slopes",  height = "380px"))
+            column(6, imageOutput("t14_scatter", height = "380px")),
+            column(6, imageOutput("t14_slopes",  height = "380px"))
           ),
           br(),
           wellPanel(div(uiOutput("t14_verdict"), align = "justify"))
@@ -806,7 +828,7 @@ ui <- fluidPage(
         ),
         column(
           width = 8,
-          plotOutput("t15_plot", height = "440px"),
+          imageOutput("t15_plot", height = "440px"),
           wellPanel(div(uiOutput("t15_verdict"), align = "justify"))
         )
       )
@@ -841,8 +863,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t16_plot", height = "440px")),
-            column(6, plotOutput("t16_sim",  height = "440px"))
+            column(6, imageOutput("t16_plot", height = "440px")),
+            column(6, imageOutput("t16_sim",  height = "440px"))
           ),
           wellPanel(div(uiOutput("t16_verdict"), align = "justify"))
         )
@@ -870,8 +892,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t17_plot",  height = "440px")),
-            column(6, plotOutput("t17_width", height = "440px"))
+            column(6, imageOutput("t17_plot",  height = "440px")),
+            column(6, imageOutput("t17_width", height = "440px"))
           ),
           wellPanel(div(uiOutput("t17_verdict"), align = "justify"))
         )
@@ -915,8 +937,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t18_curve", height = "380px")),
-            column(6, plotOutput("t18_hist",  height = "380px"))
+            column(6, imageOutput("t18_curve", height = "380px")),
+            column(6, imageOutput("t18_hist",  height = "380px"))
           ),
           p(style = "font-size:12.5px; color:#777; margin:6px 2px 0;",
             "The dots on the left are this run's actual simulated results, plotted ",
@@ -950,7 +972,7 @@ ui <- fluidPage(
         ),
         column(
           width = 8,
-          plotOutput("t19_plot", height = "440px"),
+          imageOutput("t19_plot", height = "440px"),
           wellPanel(div(uiOutput("t19_verdict"), align = "justify"))
         )
       )
@@ -990,8 +1012,8 @@ ui <- fluidPage(
         column(
           width = 8,
           fluidRow(
-            column(6, plotOutput("t20_grouped",    height = "380px")),
-            column(6, plotOutput("t20_individual", height = "380px"))
+            column(6, imageOutput("t20_grouped",    height = "380px")),
+            column(6, imageOutput("t20_individual", height = "380px"))
           ),
           wellPanel(div(uiOutput("t20_verdict"), align = "justify"))
         )
@@ -1023,7 +1045,7 @@ ui <- fluidPage(
         ),
         column(
           width = 8,
-          plotOutput("t21_plot", height = "440px"),
+          imageOutput("t21_plot", height = "440px"),
           wellPanel(div(uiOutput("t21_verdict"), align = "justify"))
         )
       )
@@ -1050,14 +1072,14 @@ server <- function(input, output, session) {
     list(size = size, bold = bold)
   })
   
-  # Draw one random sample (teal — always the reference)
+  # Draw one random sample (teal, always the reference)
   t1_rand_samp <- reactive({
     pop <- t1_pop()
     idx <- sample(length(pop$size), input$t1_n)
     pop$size[idx]
   })
   
-  # Draw one biased sample (orange — depends on method)
+  # Draw one biased sample (orange, depends on method)
   t1_bias_samp <- reactive({
     pop    <- t1_pop()
     size   <- pop$size
@@ -1086,7 +1108,7 @@ server <- function(input, output, session) {
     size[idx]
   })
   
-  # 500 simulations for teal (random) — reruns only when n or pop changes
+  # 500 simulations for teal (random): reruns only when n or pop changes
   t1_rand_sims <- reactive({
     pop    <- t1_pop()
     size   <- pop$size
@@ -1094,7 +1116,7 @@ server <- function(input, output, session) {
     replicate(500, mean(size[sample(length(size), n_samp)]))
   })
   
-  # 500 simulations for orange (biased) — reruns when method or bias sliders change
+  # 500 simulations for orange (biased): reruns when method or bias sliders change
   t1_bias_sims <- reactive({
     pop    <- t1_pop()
     size   <- pop$size
@@ -1126,7 +1148,7 @@ server <- function(input, output, session) {
     })
   })
   
-  output$t1_pop <- renderPlot({
+  output$t1_pop <- render_base("t1_pop", session, function() {
     pop      <- t1_pop()
     rs       <- t1_rand_samp()
     bs       <- t1_bias_samp()
@@ -1168,7 +1190,7 @@ server <- function(input, output, session) {
            ))
   })
   
-  output$t1_sim <- renderPlot({
+  output$t1_sim <- render_base("t1_sim", session, function() {
     rs_means <- t1_rand_sims()
     bs_means <- t1_bias_sims()
     true_mn  <- mean(t1_pop()$size)
@@ -1242,7 +1264,7 @@ server <- function(input, output, session) {
                                                "Any difference between their means is pure chance and shrinks as n grows."),
                           convenience = paste0("Sampling only from shore captures the smaller, shallower fish. ",
                                                "Larger fish in deeper water are never encountered. ",
-                                               "Increasing sample size just gives a more precise underestimate — ",
+                                               "Increasing sample size just gives a more precise underestimate; ",
                                                "the bias never goes away."),
                           threshold   = paste0("A net with large mesh releases everything below ", input$t1_thresh,
                                                " cm. Only larger fish are retained. ",
@@ -1281,7 +1303,7 @@ server <- function(input, output, session) {
     list(zones = zones, hit_zone = hit_zone, returned = !lost, lost = lost, n = n)
   })
   
-  output$t2_plot <- renderPlot({
+  output$t2_plot <- render_base("t2_plot", session, function() {
     d <- t2_data(); zones <- d$zones
     ret_counts  <- table(factor(d$hit_zone[d$returned], levels = zones))
     lost_counts <- table(factor(d$hit_zone[d$lost],     levels = zones))
@@ -1309,7 +1331,7 @@ server <- function(input, output, session) {
            fill   = c(adjustcolor(teal, 0.85), adjustcolor(orange, 0.40)),
            border = c("white", adjustcolor(orange, 0.80)),
            legend = c(paste0("Returned  (n = ", n_ret, ")"),
-                      paste0("Lost  (n = ", n_lost, ")  \u2014 never observed")))
+                      paste0("Lost  (n = ", n_lost, "), never observed")))
     arrows(1, ylim[2] * 0.80, 1, lost_pct["Engines"] + ylim[2] * 0.07,
            col = adjustcolor(orange, 0.85), lwd = 2, length = 0.10)
     text(1, ylim[2] * 0.84, "Wald: reinforce\nthese planes!",
@@ -1366,7 +1388,7 @@ server <- function(input, output, session) {
   output$t3_r_elite <- renderUI({
     d <- t3_data(); elite <- t3_elite()
     if (sum(elite) < 3)
-      return(tags$p(style = "font-size:28px;font-weight:700;margin:0;", "\u2014"))
+      return(tags$p(style = "font-size:28px;font-weight:700;margin:0;", "n/a"))
     r <- round(cor(d$effort[elite], d$talent[elite]), 2)
     col <- if (r >= 0) blue else orange
     tags$p(style = paste0("font-size:28px;font-weight:700;color:", col, ";margin:0;"),
@@ -1379,7 +1401,7 @@ server <- function(input, output, session) {
     tags$p(style = "font-size:16px;font-weight:600;color:#222;margin:0;padding-top:6px;",
            if (input$t3_method == "composite") "composite" else "both axes")
   })
-  output$t3_plot_pop <- renderPlot({
+  output$t3_plot_pop <- render_base("t3_plot_pop", session, function() {
     d <- t3_data(); elite <- t3_elite()
     r_pop <- round(cor(d$effort, d$talent), 2)
     col_pts <- ifelse(elite, adjustcolor(blue, 0.80), adjustcolor("gray55", 0.40))
@@ -1414,7 +1436,7 @@ server <- function(input, output, session) {
            col = c(adjustcolor(blue, 0.80), adjustcolor("gray55", 0.60), "#C0392B"),
            legend = c("Elite", "Below threshold", "Selection boundary"))
   })
-  output$t3_plot_elite <- renderPlot({
+  output$t3_plot_elite <- render_base("t3_plot_elite", session, function() {
     d <- t3_data(); elite <- t3_elite()
     if (sum(elite) < 3) {
       plot.new(); text(0.5, 0.5, "Too few elite\nto plot.\nLower the threshold.",
@@ -1459,7 +1481,7 @@ server <- function(input, output, session) {
          ppv = tp / max(tp + fp, 1), npv = tn / max(tn + fn, 1),
          prev=prev, sens=sens, spec=spec, n=n)
   })
-  output$t4_ppv <- renderPlot({
+  output$t4_ppv <- render_base("t4_ppv", session, function() {
     v <- t4_vals()
     prev_seq <- seq(0.001, 0.5, length.out = 200)
     ppv_seq  <- (prev_seq * v$sens) / (prev_seq * v$sens + (1 - prev_seq) * (1 - v$spec))
@@ -1475,7 +1497,7 @@ server <- function(input, output, session) {
            legend = paste0("At ", input$t4_prev, "% prevalence:\nPPV = ", round(v$ppv * 100, 1), "%"),
            text.col = orange)
   })
-  output$t4_crowd <- renderPlot({
+  output$t4_crowd <- render_base("t4_crowd", session, function() {
     v <- t4_vals(); total_pos <- v$tp + v$fp
     ymax <- max(v$tp, v$fp) * 1.40   # 40% headroom keeps legend clear of bars
     par(mar = c(3, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.15)
@@ -1511,7 +1533,7 @@ server <- function(input, output, session) {
     set.seed(51 + input$t5_new); n <- input$t5_n
     list(X = rnorm(n), Y = rnorm(n), n = n)
   })
-  output$t5_scatter <- renderPlot({
+  output$t5_scatter <- render_base("t5_scatter", session, function() {
     d <- t5_one(); r <- cor(d$X, d$Y); p <- cor.test(d$X, d$Y)$p.value; rc <- crit_r(d$n - 2)
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
     plot(d$X, d$Y, pch = 19, col = blue, cex = 1.3,
@@ -1521,7 +1543,7 @@ server <- function(input, output, session) {
            legend = c(paste0("r = ", round(r, 2), if (abs(r) > rc) " (significant)" else " (not significant)"),
                       paste0("critical |r| = ", round(rc, 2)), paste0("p = ", signif(p, 2))))
   })
-  output$t5_hist <- renderPlot({
+  output$t5_hist <- render_base("t5_hist", session, function() {
     r <- t5_sim(); n <- input$t5_n; rc <- crit_r(n - 2)
     hist(r, breaks = 30, col = teal, border = "white", xlim = c(-1, 1),
          main = "Correlations found by chance between unrelated variables",
@@ -1550,7 +1572,7 @@ server <- function(input, output, session) {
     test2 <- rel * true_score + sqrt(1 - rel^2) * rnorm(n)
     list(test1 = test1, test2 = test2, selected = test1 >= quantile(test1, 1 - pct), pct = pct)
   })
-  output$t6_scatter <- renderPlot({
+  output$t6_scatter <- render_base("t6_scatter", session, function() {
     d <- t6_data()
     col_pts <- ifelse(d$selected, adjustcolor(orange, 0.75), adjustcolor("gray55", 0.40))
     cex_pts <- ifelse(d$selected, 1.1, 0.60)
@@ -1569,7 +1591,7 @@ server <- function(input, output, session) {
                       "Rest of population", "Selection threshold"))
     
   })
-  output$t6_bars <- renderPlot({
+  output$t6_bars <- render_base("t6_bars", session, function() {
     d <- t6_data()
     m1_sel <- mean(d$test1[d$selected]); m2_sel <- mean(d$test2[d$selected]); m1_all <- mean(d$test1)
     par(mar = c(4, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
@@ -1607,7 +1629,7 @@ server <- function(input, output, session) {
     }
     list(obs_d = obs_d, sig = sig, true_d = d, n = n, nsim = nsim)
   })
-  output$t7_all <- renderPlot({
+  output$t7_all <- render_base("t7_all", session, function() {
     s <- t7_sim()
     all_d <- s$obs_d; sig <- s$sig
     # Fix x-axis to true effect ± 4 SE of d, stable across resamples but responsive to sliders
@@ -1631,7 +1653,7 @@ server <- function(input, output, session) {
     legend("topleft", bty = "n", cex = 0.95, lty = 2, lwd = 2.5, col = blue,
            legend = paste0("True effect d = ", s$true_d))
   })
-  output$t7_published <- renderPlot({
+  output$t7_published <- render_base("t7_published", session, function() {
     s <- t7_sim(); pub <- s$obs_d[s$sig]
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
     if (length(pub) < 5) {
@@ -1690,7 +1712,7 @@ server <- function(input, output, session) {
     for (i in 1:N) Y[i, ] <- subj[i] + rnorm(m, 0, 0.2)
     list(X = X, Ycorrect = rowMeans(Y), Xpool = rep(X, each = m), Ypool = as.vector(t(Y)), N = N, m = m)
   })
-  output$t8_scatter <- renderPlot({
+  output$t8_scatter <- render_base("t8_scatter", session, function() {
     d <- t8_data(); rc <- cor(d$X, d$Ycorrect); rp <- cor(d$Xpool, d$Ypool)
     crc <- crit_r(d$N - 2); crp <- crit_r(d$N * d$m - 2)
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
@@ -1704,7 +1726,7 @@ server <- function(input, output, session) {
            legend = c(paste0("Correct: r = ", round(rc, 2), if (abs(rc) > crc) " (sig)" else " (n.s.)"),
                       paste0("Pooled:  r = ", round(rp, 2), if (abs(rp) > crp) " (sig)" else " (n.s.)")))
   })
-  output$t8_plot <- renderPlot({
+  output$t8_plot <- render_base("t8_plot", session, function() {
     N <- input$t8_subj; obs <- input$t8_obs; dfc <- N - 2; dfp <- N * obs - 2
     dfseq <- 1:max(60, dfp + 5)
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
@@ -1737,7 +1759,7 @@ server <- function(input, output, session) {
     list(pre = pre, post = post, high = pre >= median(pre))
   })
   
-  # 1000-simulation reactive — reruns when n or reliability changes
+  # 1000-simulation reactive: reruns when n or reliability changes
   t9_sims <- reactive({
     set.seed(6060 + input$t9_new)
     n <- input$t9_n; rel <- input$t9_rel; nsim <- 1000
@@ -1752,7 +1774,7 @@ server <- function(input, output, session) {
     p_vals[!is.na(p_vals)]
   })
   
-  output$t9_plot <- renderPlot({
+  output$t9_plot <- render_base("t9_plot", session, function() {
     d <- t9_data()
     lo_pre <- mean(d$pre[!d$high]); lo_post <- mean(d$post[!d$high])
     hi_pre <- mean(d$pre[d$high]);  hi_post <- mean(d$post[d$high])
@@ -1780,7 +1802,7 @@ server <- function(input, output, session) {
                       paste0("Effect size d = ", round(dval, 2), " (", mag, ")")))
   })
   
-  output$t9_sim <- renderPlot({
+  output$t9_sim <- render_base("t9_sim", session, function() {
     p_vals  <- t9_sims()
     n_sig   <- sum(p_vals < 0.05)
     pct_sig <- round(100 * n_sig / length(p_vals))
@@ -1796,7 +1818,7 @@ server <- function(input, output, session) {
          ylim = c(0, max(h$counts) * 1.3))
     abline(v = 0.05, col = "red", lty = 2, lwd = 2)
     text(0.5, max(h$counts) * 1.2,
-         paste0(pct_sig, "% significant — all false positives"),
+         paste0(pct_sig, "% significant: all false positives"),
          col = orange, cex = 1.05, font = 2, adj = 0.5)
   })
   
@@ -1812,7 +1834,7 @@ server <- function(input, output, session) {
       if (ti_p < 0.05) "</b> (<b>significant" else "</b> (<b>not significant",
       "</b>), effect size d = <b>", dval, "</b>. ",
       "Across 1000 simulated experiments with these same settings, <b>", pct_sig,
-      "%</b> produced a significant interaction — yet there is no real effect in any of them. ",
+      "%</b> produced a significant interaction, yet there is no real effect in any of them. ",
       "Every significant result is a false positive, manufactured by splitting groups ",
       "using the same noisy baseline data that is then being analysed."
     ))
@@ -1837,7 +1859,7 @@ server <- function(input, output, session) {
     list(fp_fixed = fp_fixed / nsim, fp_peeking = fp_peeking / nsim,
          p_at_peek = p_at_peek, peeks = peeks, batch = batch, nsim = nsim)
   })
-  output$t10_pvals <- renderPlot({
+  output$t10_pvals <- render_base("t10_pvals", session, function() {
     d <- t10_sim(); p_final <- d$p_at_peek[, d$peeks]
     hist(p_final, breaks = 30, col = teal, border = "white",
          main = "Distribution of p-values at final peek\n(true effect = zero)",
@@ -1845,7 +1867,7 @@ server <- function(input, output, session) {
     abline(v = 0.05, col = orange, lwd = 2, lty = 2)
     legend("topright", bty = "n", cex = 1.0, lty = 2, lwd = 2, col = orange, legend = "p = 0.05")
   })
-  output$t10_fpr <- renderPlot({
+  output$t10_fpr <- render_base("t10_fpr", session, function() {
     d <- t10_sim()
     fpr_by_peek <- numeric(d$peeks)
     for (k in seq_len(d$peeks))
@@ -1916,7 +1938,7 @@ server <- function(input, output, session) {
     if (cov) summary(lm(y~g+co))$coefficients["g","Pr(>|t|)"]
     else     summary(lm(y~g))$coefficients["g","Pr(>|t|)"]
   }
-  output$t11_plot <- renderPlot({
+  output$t11_plot <- render_base("t11_plot", session, function() {
     dat <- t11_full()
     combos <- expand.grid(outcome=c("A","B"), excl=c(FALSE,TRUE), cov=c(FALSE,TRUE), stringsAsFactors=FALSE)
     ps  <- mapply(function(o,e,c) t11_p(dat,o,e,c), combos$outcome,combos$excl,combos$cov)
@@ -1930,7 +1952,7 @@ server <- function(input, output, session) {
     points(bp[sel], cur+0.04, pch=25, bg="black", col="black", cex=1.8)
     legend("topright", bty="n", cex=1.0, pch=25, pt.bg="black", legend="your current choice")
   })
-  output$t11_raw <- renderPlot({
+  output$t11_raw <- render_base("t11_raw", session, function() {
     dat <- t11_full()
     y <- if (input$t11_outcome=="A") dat$yA else dat$yB; g <- dat$group; co <- dat$cov
     removed <- if (input$t11_excl) which.max(abs(y-mean(y))) else NA
@@ -1969,7 +1991,7 @@ server <- function(input, output, session) {
   
   # ===== 12. MULTIPLE COMPARISONS ===========================================
   t12_p <- reactive({ set.seed(80 + input$t12_new); runif(input$t12_m) })
-  output$t12_squares <- renderPlot({
+  output$t12_squares <- render_base("t12_squares", session, function() {
     p <- t12_p(); m <- length(p); g <- ceiling(sqrt(m))
     alpha <- as.numeric(input$t12_alpha)
     xs <- ((seq_len(m)-1) %% g)+1; ys <- g-((seq_len(m)-1) %/% g)
@@ -1981,7 +2003,7 @@ server <- function(input, output, session) {
     symbols(xs, ys, squares=rep(0.9,m), inches=FALSE, add=TRUE,
             bg=ifelse(p<alpha, orange, "gray85"), fg="white")
   })
-  output$t12_curve <- renderPlot({
+  output$t12_curve <- render_base("t12_curve", session, function() {
     m <- input$t12_m; alpha <- as.numeric(input$t12_alpha); nn <- 1:100
     fwer <- 1-(1-alpha)^nn; bonf <- 1-(1-alpha/nn)^nn
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
@@ -2030,7 +2052,7 @@ server <- function(input, output, session) {
     }
     list(train=train_err, test=test_err, maxd=maxd)
   })
-  output$t13_fit <- renderPlot({
+  output$t13_fit <- render_base("t13_fit", session, function() {
     d <- t13_data(); maxd <- input$t13_maxd; xseq <- seq(-3,3,length.out=300)
     fit2 <- lm(d$y_tr ~ poly(d$x_tr,2,raw=TRUE))
     y2   <- as.numeric(cbind(1,poly(xseq,2,raw=TRUE)) %*% coef(fit2))
@@ -2046,7 +2068,7 @@ server <- function(input, output, session) {
     legend("topleft", bty="n", cex=1.0, lwd=2.5, col=c(teal,orange), inset=c(0.02,0.03),
            legend=c("Simple (degree 2)","Complex (degree max)"))
   })
-  output$t13_err <- renderPlot({
+  output$t13_err <- render_base("t13_err", session, function() {
     e <- t13_errors()
     all_err <- c(e$train, e$test); ypad <- diff(range(all_err,na.rm=TRUE))*0.10
     ylim <- c(max(0, min(all_err,na.rm=TRUE)-ypad), max(all_err,na.rm=TRUE)+ypad)
@@ -2083,7 +2105,7 @@ server <- function(input, output, session) {
          beta=beta, err_x=err_x, err_y=err_y, n=n)
   })
   
-  output$t14_scatter <- renderPlot({
+  output$t14_scatter <- render_base("t14_scatter", session, function() {
     d <- t14_data()
     # OLS on observed data
     fit_ols <- lm(d$y_obs ~ d$x_obs)
@@ -2128,7 +2150,7 @@ server <- function(input, output, session) {
            col=legend_cols, legend=legend_labs)
   })
   
-  output$t14_slopes <- renderPlot({
+  output$t14_slopes <- render_base("t14_slopes", session, function() {
     d <- t14_data()
     # Simulate many resamples to show distribution of OLS slope vs true
     set.seed(1313 + input$t14_new)
@@ -2188,7 +2210,7 @@ server <- function(input, output, session) {
     trt_pre   <- rnorm(n,10,2); trt_post  <- trt_pre  + input$t15_drift + input$t15_eff + rnorm(n,0,2)
     list(ctrl_pre=ctrl_pre, ctrl_post=ctrl_post, trt_pre=trt_pre, trt_post=trt_post)
   })
-  output$t15_plot <- renderPlot({
+  output$t15_plot <- render_base("t15_plot", session, function() {
     d <- t15_data(); pts <- list(d$ctrl_pre,d$ctrl_post,d$trt_pre,d$trt_post)
     xs <- c(1,2,4,5); cols <- c(grey,grey,teal,teal); yl <- range(unlist(pts))+c(-1,1)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
@@ -2231,7 +2253,7 @@ server <- function(input, output, session) {
     }
     c(wrong=wrong/1000, right=right/1000)
   })
-  output$t16_plot <- renderPlot({
+  output$t16_plot <- render_base("t16_plot", session, function() {
     d <- t16_data(); sC <- mean_ci(d$C); sD <- mean_ci(d$D)
     pC <- t.test(d$C, mu=0)$p.value
     pD <- t.test(d$D, mu=0)$p.value
@@ -2286,7 +2308,7 @@ server <- function(input, output, session) {
          "Indirect Comparison \u2013 Wrong Way",
          col="gray30", cex=0.9, font=3, adj=0.5)
   })
-  output$t16_sim <- renderPlot({
+  output$t16_sim <- render_base("t16_sim", session, function() {
     r <- t16_rates()
     pct <- ifelse(100*r < 10, sprintf("%.1f", 100*r), sprintf("%.0f", 100*r))
     alpha <- as.numeric(input$t16_alpha)
@@ -2338,7 +2360,7 @@ server <- function(input, output, session) {
     pool <- rnorm(max(ns),eff,1)
     list(ns=ns, ests=lapply(ns, function(n) mean_ci(pool[1:n])), eff=eff)
   })
-  output$t17_plot <- renderPlot({
+  output$t17_plot <- render_base("t17_plot", session, function() {
     d <- t17_data()
     max_hw  <- qt(0.975, min(d$ns) - 1) / sqrt(min(d$ns))  # widest possible CI half-width (smallest n)
     xlim    <- c(min(0, input$t17_eff) - max_hw - 0.6,
@@ -2357,7 +2379,7 @@ server <- function(input, output, session) {
     legend("bottomright", bty="n", cex=1.0, lwd=2, col=c(blue,orange),
            legend=c("CI excludes 0 (significant)","CI includes 0 (non-significant)"))
   })
-  output$t17_width <- renderPlot({
+  output$t17_width <- render_base("t17_width", session, function() {
     d <- t17_data(); obs_hw <- sapply(d$ests,function(s)(s$hi-s$lo)/2)
     nn <- seq(min(d$ns),max(d$ns)); theo <- qt(0.975,nn-1)/sqrt(nn)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
@@ -2392,7 +2414,7 @@ server <- function(input, output, session) {
     }
     list(p = pvals, d = dvals)
   })
-  output$t18_curve <- renderPlot({
+  output$t18_curve <- render_base("t18_curve", session, function() {
     d  <- t18_data()
     n  <- input$t18_n
     xr <- max(1, max(abs(d$d), na.rm = TRUE) * 1.1)
@@ -2410,7 +2432,7 @@ server <- function(input, output, session) {
            col=c(teal, orange, blue),
            legend=c("theoretical curve (this n)", "significant (p<.05)", "not significant"))
   })
-  output$t18_hist <- renderPlot({
+  output$t18_hist <- render_base("t18_hist", session, function() {
     d <- t18_data()
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     hist(d$p, breaks=seq(0,1,0.05), col=teal, border="white",
@@ -2467,7 +2489,7 @@ server <- function(input, output, session) {
       list(X=b$X+shift, Y=b$Y+shift, grp=c(rep(1,10),rep(2,10)))
     }
   })
-  output$t19_plot <- renderPlot({
+  output$t19_plot <- render_base("t19_plot", session, function() {
     d <- t19_data(); r <- cor(d$X,d$Y); ci <- boot_r_ci(d$X,d$Y)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$X,d$Y,pch=19,col=ifelse(d$grp==2,orange,blue),cex=1.3,
@@ -2500,7 +2522,7 @@ server <- function(input, output, session) {
          r_ind=cor(all_x,all_y), r_grp=if(ng>1) cor(as.numeric(gx),as.numeric(gy)) else NA)
   })
   grp_cols <- function(ng) sapply(seq(0.1,0.9,length.out=ng), function(h) hsv(h,0.65,0.75))
-  output$t20_grouped <- renderPlot({
+  output$t20_grouped <- render_base("t20_grouped", session, function() {
     d <- t20_data(); ng <- input$t20_groups; cols <- grp_cols(ng)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$gx,d$gy,pch=19,col=cols,cex=3.5,
@@ -2510,7 +2532,7 @@ server <- function(input, output, session) {
     legend("topright",bty="n",cex=1.1,
            legend=paste0("r (groups) = ",if(!is.na(d$r_grp)) round(d$r_grp,2) else "N/A"))
   })
-  output$t20_individual <- renderPlot({
+  output$t20_individual <- render_base("t20_individual", session, function() {
     d <- t20_data(); ng <- input$t20_groups; cols <- grp_cols(ng)
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(d$x,d$y,pch=19,col=adjustcolor(cols[d$grp],0.60),cex=0.8,
@@ -2534,7 +2556,7 @@ server <- function(input, output, session) {
     
     # Does the pooled individual r misrepresent the true within-group relationship?
     # True individual relationship is set by the slider (rw)
-    # Pooled r is d$r_ind — if they differ in sign, the fallacy is clearly visible
+    # Pooled r is d$r_ind; if they differ in sign, the fallacy is clearly visible
     wrong_sign  <- sign(r_i) != sign(rw) && abs(rw) > 0.05
     wrong_dirn  <- if (rw > 0.05)  "positive" else if (rw < -0.05) "negative" else "near-zero"
     pooled_dirn <- if (r_i > 0)    "positive" else if (r_i < 0)    "negative" else "near-zero"
@@ -2558,7 +2580,7 @@ server <- function(input, output, session) {
       paste0(
         "Here the pooled individual r = <b>", r_i,
         "</b> happens to be close to the true within-group correlation (<b>", rw, "</b>), ",
-        "but this agreement is coincidental — group structure can distort it severely ",
+        "but this agreement is coincidental; group structure can distort it severely ",
         "when between-group separation is large."
       )
     }
@@ -2567,7 +2589,7 @@ server <- function(input, output, session) {
       "At the group level, r = <b>", r_g, "</b>. ",
       "Pooled across all individuals (ignoring groups), r = <b>", r_i, "</b>. ",
       "The true within-group (individual-level) correlation is <b>", rw, "</b>. <br><br>",
-      if (flip) "<b>The direction of the relationship has reversed between levels</b> — this is Simpson's paradox. "
+      if (flip) "<b>The direction of the relationship has reversed between levels</b>. This is Simpson's paradox. "
       else "The relationship differs between levels of analysis. ",
       mislead_txt,
       "<br><br>Drawing conclusions about individuals from group-level data is the ecological fallacy."
@@ -2580,7 +2602,7 @@ server <- function(input, output, session) {
     Xz<-s*Z+sqrt(1-s^2)*rnorm(n); Yz<-s*Z+sqrt(1-s^2)*rnorm(n)
     list(X=round(pmax(0,5+2.2*Xz),1), Y=round(pmax(0,8+3*Yz),1), Z=Z)
   })
-  output$t21_plot <- renderPlot({
+  output$t21_plot <- render_base("t21_plot", session, function() {
     d <- t21_data()
     if (input$t21_ctrl) {
       rx<-resid(lm(d$X~d$Z)); ry<-resid(lm(d$Y~d$Z)); r<-cor(rx,ry)
