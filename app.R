@@ -2265,7 +2265,7 @@ server <- function(input, output, session) {
     plot(NULL, xlim=c(0.5, 2.5), ylim=yl, xaxt="n", xlab="",
          ylab="Effect (difference from zero)",
          main="Each group vs. zero, then vs. each other", bty="l")
-    axis(1, at=c(1,2), labels=c("Group C","Group D"), cex.axis=1.2)
+    axis(1, at=c(1,2), labels=c("Group A","Group B"), cex.axis=1.2)
     abline(h=0, col="gray70", lty=2)
     points(jitter(rep(1,length(d$C)),amount=0.08), d$C, col="gray80", pch=19, cex=0.5)
     points(jitter(rep(2,length(d$D)),amount=0.08), d$D, col="gray80", pch=19, cex=0.5)
@@ -2339,10 +2339,10 @@ server <- function(input, output, session) {
     
     HTML(paste0(
       "Using \u03b1 = <b>", alpha, "</b>:<br>",
-      "Group C vs zero: <b>p=", signif(pC,2), "</b> (<b>", sig(pC), "</b>). ",
-      "Group D vs zero: <b>p=", signif(pD,2), "</b> (<b>", sig(pD), "</b>). ",
+      "Group A vs zero: <b>p=", signif(pC,2), "</b> (<b>", sig(pC), "</b>). ",
+      "Group B vs zero: <b>p=", signif(pD,2), "</b> (<b>", sig(pD), "</b>). ",
       "Direct comparison: <b>p=", signif(pCD,2), "</b> (<b>", sig(pCD), "</b>).<br> ",
-      "The indirect comparison would conclude that Group C and Group D ",
+      "The indirect comparison would conclude that Group A and Group B ",
       indirect_conclusion, " significantly different from each other.<br><br>",
       "Both groups have the same true mean, so any 'difference' is a false alarm. ",
       "The wrong method declares a difference about <b>", round(100*r["wrong"]),
