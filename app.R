@@ -2450,18 +2450,41 @@ server <- function(input, output, session) {
   })
   output$t17_width <- render_base("t17_width", session, function() {
     d <- t17_data(); obs_hw <- sapply(d$ests,function(s)(s$hi-s$lo)/2)
+    # Colour each study's dot to match the left plot: orange = CI includes 0
+    dot_col <- sapply(d$ests, function(s) if (s$lo <= 0 & s$hi >= 0) orange else blue)
     nn <- seq(min(d$ns),max(d$ns)); theo <- qt(0.975,nn-1)/sqrt(nn)
+    ytop <- max(obs_hw, theo, d$eff) * 1.35          # headroom keeps legend clear of the effect line
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
-    plot(nn,theo,type="l",lwd=3,col=teal, ylim=c(0,max(obs_hw,theo)),
-         xlab="Sample size (n)", ylab="95% CI half-width",
+    plot(nn,theo,type="l",lwd=3,col=teal, ylim=c(0,ytop),
+         xlab="Sample size (n)", ylab="95% CI half-width (the \u00b1 part)",
          main="The interval shrinks as n grows", bty="l")
-    points(d$ns,obs_hw,pch=19,col=blue,cex=1.6)
-    legend("topright",bty="n",cex=1.0,lwd=c(3,NA),pch=c(NA,19),col=c(teal,blue),
-           legend=c("Theoretical","This run's studies"))
+    if (d$eff > 0) abline(h=d$eff, col="gray40", lty=2, lwd=2)
+    points(d$ns,obs_hw,pch=19,col=dot_col,cex=1.6)
+    leg_txt <- c("Expected half-width", "Study: CI excludes 0 (sig)", "Study: CI includes 0 (n.s.)")
+    leg_lty <- c(1, NA, NA); leg_lwd <- c(3, NA, NA); leg_pch <- c(NA, 19, 19)
+    leg_col <- c(teal, blue, orange)
+    if (d$eff > 0) {
+      leg_txt <- c(leg_txt, paste0("True effect (", d$eff, ")"))
+      leg_lty <- c(leg_lty, 2); leg_lwd <- c(leg_lwd, 2); leg_pch <- c(leg_pch, NA)
+      leg_col <- c(leg_col, "gray40")
+    }
+    legend("topright", bty="n", cex=0.95, lty=leg_lty, lwd=leg_lwd, pch=leg_pch,
+           col=leg_col, legend=leg_txt)
   })
   output$t17_verdict <- renderUI({
     eff <- input$t17_eff
-    theory_note <- "The teal line shows the theoretical 95% CI half-width: t\u2090 / \u221an, where t\u2090 is the t-quantile at 0.975 for n \u2212 1 degrees of freedom. This is the expected interval width for a standard normal population at each sample size."
+    theory_note <- paste0(
+      "<b>Reading the right-hand plot:</b> the <b>half-width</b> is how far a 95% confidence ",
+      "interval reaches either side of its estimate - the '\u00b1' part. The teal curve is the ",
+      "expected half-width at each sample size: t<sub>0.05(2), n\u22121</sub> \u00d7 s / \u221an, ",
+      "where t<sub>0.05(2), n\u22121</sub> is the two-tailed critical t value at \u03b1 = 0.05 ",
+      "and s = 1 is the standard deviation used in this simulation. The dots are this run's five ",
+      "studies, coloured as on the left; they scatter around the curve because each sample's ",
+      "standard deviation varies a little.",
+      if (eff > 0) paste0(
+        " The dashed line marks the true effect (", eff, "). A study is significant only when ",
+        "its estimate is farther from zero than its half-width, so studies whose dots sit ",
+        "above the line usually cannot tell the effect apart from zero.") else "")
     if (eff==0) HTML(paste0("Here the true effect really is <b>zero</b>. Even so, small studies cannot prove that - their intervals are wide. A non-significant result with a small sample is uninformative, not proof of no effect.<br><br>", theory_note))
     else HTML(paste0("The true effect is <b>",eff,"</b>. Yet small studies give wide intervals that may include zero and read as non-significant. The effect did not disappear - the study was too small to detect it.<br><br>", theory_note))
   })
