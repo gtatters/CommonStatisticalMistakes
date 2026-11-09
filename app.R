@@ -556,9 +556,9 @@ ui <- fluidPage(
             p(strong("The mistake")),
             p("In a pre-post study, a measure is recorded twice per subject ",
               "(before and after) and correlated with a clinical parameter. ",
-              "With 10 subjects there are really only 10 independent values - ",
-              "8 degrees of freedom - so the correlation must reach about ",
-              "r = 0.63 to count as significant. If the pre and post values are ",
+              "With 10 subjects there are really only 10 independent values ",
+              "(8 degrees of freedom) so the correlation must reach about ",
+              "r = 0.63 to count as significant (at \u03b1 = 0.05). If the pre and post values are ",
               "pooled and treated as 20 separate observations, the degrees of ",
               "freedom jump to 18 and the bar drops to about r = 0.44. The same ",
               "relationship now looks significant even though no new independent ",
@@ -598,6 +598,11 @@ ui <- fluidPage(
               "'the weak improved, the strong declined' - but it is just regression ",
               "to the mean, manufactured by choosing the groups from the very same ",
               "noisy data being analysed."),
+            p(strong("Reliability"), " is how closely an athlete's two scores agree when ",
+              "nothing has changed: at 0 the scores are pure luck, near 1 they are almost ",
+              "identical. The ", strong("interaction"), " test asks whether the low and high ",
+              "groups changed by different amounts; it is called significant when p < 0.05. ",
+              "There is no training or treatment between the two tests."),
             sliderInput("t9_n",   "Number of athletes:",
                         value = 30, min = 10, max = 200),
             sliderInput("t9_rel", "Test reliability (0 = pure noise, 1 = perfect):",
@@ -817,11 +822,18 @@ ui <- fluidPage(
             p("A group is measured before and after a treatment, improves, and the ",
               "improvement is credited to the treatment - with no control group to ",
               "show how much change happens anyway."),
+            p("The ", strong("practice / time effect"), " is any change that happens to ",
+              "everyone between the two measurements, treated or not: getting used to ",
+              "the test, learning, growing older, or the season changing. Only a control ",
+              "group, measured at the same times but left untreated, reveals how big it is."),
+            p("Two tests are shown, both at \u03b1 = 0.05. The ", strong("wrong way"),
+              " compares the treated group's before and after scores on their own. The ",
+              strong("right way"), " compares how much the treated group changed with how ",
+              "much the control group changed."),
             sliderInput("t15_eff",   "True treatment effect:",
-                        value = 1,   min = 0, max = 4, step = 0.25),
+                        value = 0,   min = 0, max = 4, step = 0.25),
             sliderInput("t15_drift", "Practice / time effect (everyone):",
-                        value = 1.5, min = 0, max = 4, step = 0.25),
-            sliderInput("t15_n",     "Participants per group:",
+                        value = 1.5, min = 0, max = 4, step = 0.25),            sliderInput("t15_n",     "Participants per group:",
                         value = 25,  min = 8, max = 80),
             actionButton("t15_new",  "Resample")
           )
@@ -850,7 +862,7 @@ ui <- fluidPage(
               "difference in significance is not a significant difference."),
             sliderInput("t16_eff", "True effect (same in both groups):",
                         value = 0.6, min = 0, max = 1.5, step = 0.05),
-            sliderInput("t16_var", "Extra spread in Group D:",
+            sliderInput("t16_var", "Extra spread in Group B:",
                         value = 1.8, min = 1, max = 3, step = 0.1),
             sliderInput("t16_n",   "Participants per group:",
                         value = 20, min = 8, max = 80),
@@ -884,7 +896,9 @@ ui <- fluidPage(
               "studied with too few independent samples gives a wide confidence ",
               "interval that includes zero - the study simply could not tell. ",
               "Absence of evidence is not evidence of absence."),
-            sliderInput("t17_eff", "True effect size:",
+            p("Each row on the left plot is one study of the same true effect, using a ",
+              "different sample size (n = 8 up to n = 128). A study is significant at ",
+              "\u03b1 = 0.05 when its 95% confidence interval does not include zero."),         sliderInput("t17_eff", "True effect size:",
                         value = 0.4, min = 0, max = 1, step = 0.05),
             actionButton("t17_new", "Resample")
           )
@@ -1716,27 +1730,44 @@ server <- function(input, output, session) {
     d <- t8_data(); rc <- cor(d$X, d$Ycorrect); rp <- cor(d$Xpool, d$Ypool)
     crc <- crit_r(d$N - 2); crp <- crit_r(d$N * d$m - 2)
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
+    yr <- range(d$Ypool)   # extra headroom so the 3-line legend sits above the points
     plot(d$Xpool, d$Ypool, pch = 1, col = "gray70", cex = 1.1,
          xlab = "Clinical parameter", ylab = "Measure",
+         ylim = c(yr[1], yr[2] + 0.45 * diff(yr)),
          main = "Same data, two ways to count it", bty = "l")
     points(d$X, d$Ycorrect, pch = 19, col = teal, cex = 1.3)
     abline(lm(d$Ypool ~ d$Xpool), col = orange, lwd = 2, lty = 2)
     abline(lm(d$Ycorrect ~ d$X),  col = teal,   lwd = 2)
-    legend("topleft", bty = "n", cex = 1.0, lwd = 2, lty = c(1, 2), col = c(teal, orange),
-           legend = c(paste0("Correct: r = ", round(rc, 2), if (abs(rc) > crc) " (sig)" else " (n.s.)"),
-                      paste0("Pooled:  r = ", round(rp, 2), if (abs(rp) > crp) " (sig)" else " (n.s.)")))
+    # Legend states what each line counts as "n", so the inflation is visible
+    legend("topleft", bty = "n", cex = 0.95,
+           pch = c(1, 19, NA), lty = c(NA, 1, 2), lwd = c(NA, 2, 2),
+           col = c("gray70", teal, orange),
+           legend = c("One measurement",
+                      paste0("Subject averages (n = ", d$N, "): r = ", round(rc, 2),
+                             if (abs(rc) > crc) " (sig)" else " (n.s.)"),
+                      paste0("All ", d$N * d$m, " pooled (wrong n): r = ", round(rp, 2),
+                             if (abs(rp) > crp) " (sig)" else " (n.s.)")))
   })
   output$t8_plot <- render_base("t8_plot", session, function() {
     N <- input$t8_subj; obs <- input$t8_obs; dfc <- N - 2; dfp <- N * obs - 2
+    crc <- crit_r(dfc); crp <- crit_r(dfp)
     dfseq <- 1:max(60, dfp + 5)
     par(mar = c(4.5, 4.5, 3, 1), cex.axis = 1.1, cex.lab = 1.2, cex.main = 1.2)
-    plot(dfseq, crit_r(dfseq), type = "l", lwd = 2, col = blue,
-         xlab = "Degrees of freedom", ylab = "Smallest |r| that is significant",
+    plot(dfseq, crit_r(dfseq), type = "l", lwd = 2, col = blue, ylim = c(0, 1),
+         xlab = "Degrees of freedom (values counted \u2212 2)",
+         ylab = "Critical r (at \u03b1 = 0.05)",
          main = "More pseudoreplication = lower bar for significance", bty = "l")
-    points(dfc, crit_r(dfc), pch = 19, col = teal,   cex = 2)
-    points(dfp, crit_r(dfp), pch = 19, col = orange, cex = 2)
-    legend("topright", bty = "n", cex = 1.0, pch = 19, col = c(teal, orange),
-           legend = c(paste0("Correct (df = ", dfc, ")"), paste0("Pooled  (df = ", dfp, ")")))
+    # Dotted guides from each point to the y-axis so the critical r can be read off
+    x0 <- par("usr")[1]
+    segments(x0, crc, dfc, crc, col = teal,   lty = 3, lwd = 1.5)
+    segments(x0, crp, dfp, crp, col = orange, lty = 3, lwd = 1.5)
+    points(dfc, crc, pch = 19, col = teal,   cex = 2)
+    points(dfp, crp, pch = 19, col = orange, cex = 2)
+    legend("topright", bty = "n", cex = 0.9,
+           pch = c(NA, 19, 19), col = c("gray30", teal, orange),
+           legend = c("Critical r = smallest |r| significant at \u03b1 = 0.05",
+                      paste0("Subject averages (df = ", dfc, "): critical r = ", round(crc, 2)),
+                      paste0("All pooled, wrong n (df = ", dfp, "): critical r = ", round(crp, 2))))
   })
   output$t8_verdict <- renderUI({
     d <- t8_data()
@@ -1747,7 +1778,10 @@ server <- function(input, output, session) {
       "With <b>", d$N, "</b> subjects and <b>", d$m, "</b> measurements each, the correct analysis uses <b>",
       d$N - 2, "</b> df and requires |r| > <b>", crc, "</b>. Here r = <b>", rc, "</b> (", sig(rc, crc), "). ",
       "Pooling all ", d$N * d$m, " measurements gives ", d$N * d$m - 2, " df and drops the bar to |r| = <b>",
-      crp, "</b>; pooled r = <b>", rp, "</b> (", sig(rp, crp), ")."
+      crp, "</b>; pooled r = <b>", rp, "</b> (", sig(rp, crp), ").",
+      "<br><br>The <b>critical r</b> is the smallest correlation (ignoring its sign, hence |r|) ",
+      "that counts as significant at \u03b1 = 0.05. If X and Y were truly unrelated, a correlation ",
+      "at least this large would turn up by chance less than 5% of the time."
     ))
   })
   
@@ -2210,9 +2244,23 @@ server <- function(input, output, session) {
     trt_pre   <- rnorm(n,10,2); trt_post  <- trt_pre  + input$t15_drift + input$t15_eff + rnorm(n,0,2)
     list(ctrl_pre=ctrl_pre, ctrl_post=ctrl_post, trt_pre=trt_pre, trt_post=trt_post)
   })
+  # Wrong way: paired t-test, treated before vs after only.
+  # Right way: t-test comparing treated change with control change.
+  t15_tests <- reactive({
+    d <- t15_data()
+    chg_t <- d$trt_post - d$trt_pre; chg_c <- d$ctrl_post - d$ctrl_pre
+    list(p_wrong = t.test(d$trt_post, d$trt_pre, paired = TRUE)$p.value,
+         p_right = t.test(chg_t, chg_c)$p.value)
+  })
+  t15_fmt <- function(p) {
+    paste0(if (p < 0.001) "p < 0.001" else paste0("p = ", format(round(p, 3), nsmall = 3)),
+           if (p < 0.05) " (sig)" else " (n.s.)")
+  }
   output$t15_plot <- render_base("t15_plot", session, function() {
-    d <- t15_data(); pts <- list(d$ctrl_pre,d$ctrl_post,d$trt_pre,d$trt_post)
-    xs <- c(1,2,4,5); cols <- c(grey,grey,teal,teal); yl <- range(unlist(pts))+c(-1,1)
+    d <- t15_data(); s <- t15_tests()
+    pts <- list(d$ctrl_pre,d$ctrl_post,d$trt_pre,d$trt_post)
+    xs <- c(1,2,4,5); cols <- c(grey,grey,teal,teal)
+    yr <- range(unlist(pts)); yl <- c(yr[1] - 1, yr[2] + 0.42 * diff(yr))   # headroom for test labels
     par(mar=c(4.5,4.5,3,1), cex.axis=1.1, cex.lab=1.2, cex.main=1.2)
     plot(NULL, xlim=c(0.5,5.5), ylim=yl, xaxt="n", xlab="", ylab="Measurement",
          main="Before vs after, with and without a control group", bty="l")
@@ -2224,14 +2272,35 @@ server <- function(input, output, session) {
     }
     segments(1,mean(d$ctrl_pre),2,mean(d$ctrl_post), col=grey, lwd=2)
     segments(4,mean(d$trt_pre), 5,mean(d$trt_post),  col=teal, lwd=2)
+    
+    # Wrong way: bracket over the treated pair only
+    h  <- diff(par("usr")[3:4]); tk <- h * 0.02
+    y1 <- yr[2] + 0.08 * diff(yr)
+    lines(c(4,4,5,5), c(y1-tk, y1, y1, y1-tk), col=orange, lwd=1.5)
+    text(4.5, y1, paste0("Wrong way: ", t15_fmt(s$p_wrong)),
+         pos=3, col=orange, cex=0.9, font=2)
+    
+    # Right way: bracket comparing the two groups' changes
+    y2 <- yr[2] + 0.26 * diff(yr)
+    lines(c(1.5,1.5,4.5,4.5), c(y2-tk, y2, y2, y2-tk), col="gray30", lwd=1.5)
+    text(3, y2, paste0("Right way (change vs change): ", t15_fmt(s$p_right)),
+         pos=3, col="gray30", cex=0.9, font=2)
+    mtext("\u03b1 = 0.05", side=1, line=3.8, adj=1, cex=0.85, col="gray50")
   })
   output$t15_verdict <- renderUI({
-    d <- t15_data()
+    d <- t15_data(); s <- t15_tests()
     apparent <- mean(d$trt_post)-mean(d$trt_pre); control <- mean(d$ctrl_post)-mean(d$ctrl_pre)
+    sig <- function(p) if (p < 0.05) "<b>significant</b>" else "<b>not significant</b>"
     HTML(paste0("Looking at the treated group alone, the score rose by <b>",round(apparent,2),
                 "</b> units. But the control group rose by <b>",round(control,2),
-                "</b> units with no treatment at all. The genuine treatment effect is about <b>",
-                round(apparent-control,2),"</b> units. Without a control group you would have credited the whole rise to the treatment."))
+                "</b> units with no treatment at all. The estimated treatment effect ",
+                "(treated rise minus control rise) is about <b>",
+                round(apparent-control,2),"</b> units.<br><br>",
+                "<b>Wrong way:</b> testing the treated group's before vs after scores on their own ",
+                "gives ", t15_fmt(s$p_wrong), ", which is ", sig(s$p_wrong), " at \u03b1 = 0.05. ",
+                "<b>Right way:</b> comparing the treated group's change with the control group's ",
+                "change gives ", t15_fmt(s$p_right), ", which is ", sig(s$p_right), ". ",
+                "Without a control group you would have credited the whole rise to the treatment."))
   })
   
   # ===== 16. COMPARING SIGNIFICANCE =========================================
@@ -2339,9 +2408,9 @@ server <- function(input, output, session) {
     
     HTML(paste0(
       "Using \u03b1 = <b>", alpha, "</b>:<br>",
-      "Group A vs zero: <b>p=", signif(pC,2), "</b> (<b>", sig(pC), "</b>). ",
-      "Group B vs zero: <b>p=", signif(pD,2), "</b> (<b>", sig(pD), "</b>). ",
-      "Direct comparison: <b>p=", signif(pCD,2), "</b> (<b>", sig(pCD), "</b>).<br> ",
+      "Group A vs zero: <b>p = ", signif(pC,2), "</b> (<b>", sig(pC), "</b>)<br>",
+      "Group B vs zero: <b>p = ", signif(pD,2), "</b> (<b>", sig(pD), "</b>)<br>",
+      "Group A vs Group B (direct comparison): <b>p = ", signif(pCD,2), "</b> (<b>", sig(pCD), "</b>)<br><br>",
       "The indirect comparison would conclude that Group A and Group B ",
       indirect_conclusion, " significantly different from each other.<br><br>",
       "Both groups have the same true mean, so any 'difference' is a false alarm. ",
@@ -2377,7 +2446,7 @@ server <- function(input, output, session) {
       points(s$m,i,pch=19,col=col,cex=1.6)
     }
     legend("bottomright", bty="n", cex=1.0, lwd=2, col=c(blue,orange),
-           legend=c("CI excludes 0 (significant)","CI includes 0 (non-significant)"))
+           legend=c("CI excludes 0 (sig, \u03b1 = 0.05)","CI includes 0 (n.s.)"))
   })
   output$t17_width <- render_base("t17_width", session, function() {
     d <- t17_data(); obs_hw <- sapply(d$ests,function(s)(s$hi-s$lo)/2)
